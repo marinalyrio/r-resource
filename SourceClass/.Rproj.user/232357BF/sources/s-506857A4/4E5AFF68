@@ -1,0 +1,27 @@
+{
+    "id": "4E5AFF68",
+    "path": "E:/workspace-r/SourceClass/allDependencies.R",
+    "project_path": "allDependencies.R",
+    "type": "r_source",
+    "hash": "423216716",
+    "contents": "",
+    "dirty": false,
+    "created": 1617201167980.0,
+    "source_on_save": false,
+    "relative_order": 1,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "17,0",
+        "scrollLine": "0",
+        "ignored_words": "DataSets\n"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1617203543,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1617203543043,
+    "read_only": false,
+    "read_only_alternatives": []
+}
