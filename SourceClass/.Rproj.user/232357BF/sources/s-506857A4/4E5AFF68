@@ -3,7 +3,7 @@
     "path": "E:/workspace-r/SourceClass/allDependencies.R",
     "project_path": "allDependencies.R",
     "type": "r_source",
-    "hash": "423216716",
+    "hash": "2298473461",
     "contents": "",
     "dirty": false,
     "created": 1617201167980.0,
@@ -12,16 +12,16 @@
     "properties": {
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "17,0",
+        "cursorPosition": "1,26",
         "scrollLine": "0",
         "ignored_words": "DataSets\n"
     },
     "folds": "",
-    "lastKnownWriteTime": 1617203543,
+    "lastKnownWriteTime": 1617206102,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1617203543043,
+    "last_content_update": 1617206102792,
     "read_only": false,
     "read_only_alternatives": []
 }

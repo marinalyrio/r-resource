@@ -1,5 +1,5 @@
 
-# To organize all dependencies (packages)
+# To organize and install all dependencies (packages)
 
 install.packages("vctrs", type = "binary")
 install.packages("tibble")

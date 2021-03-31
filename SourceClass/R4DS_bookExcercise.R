@@ -3,9 +3,9 @@
 
 library(nycflights13)
 library(tidyverse)
-library(ggplot2) # Visualização
-library(dplyr) # Filtragem de dados e mesclagem de tabelas
-library(tidyr) # Ajuste de formato em tabelas
+library(ggplot2)
+library(dplyr)
+library(tidyr)
 library(hrbrthemes)
 library(styler)
 
