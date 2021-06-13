@@ -31,13 +31,540 @@ View(weather)
   # à quantidade voos. Identifique os momentos de maior demanda (horários, dias da semana e meses do ano).
   # Como são os voos por empresa área? Duração e distâncias típicas de voos?
 
+View(airlines)
+
+View(airports)
+
+View(flights)
+
+View(planes)
+
+
+# Importar Bibliotecas --------------------------------------------------------------------------------#
+
+
+library(tidyverse)
+
+library(dplyr)
+
+library(tidyr)
+
+library(stringr)
+
+library(lubridate)
+
+
+# Análise Bases --------------------------------------------------------------------------------#
+
+
+summary(airlines)
+
+summary(airports)
+
+summary(flights)
+
+summary(planes)
+
+
+str(airlines)
+
+str(airports)
+
+str(flights)
+
+str(planes)
+
+
+# QUANTIDADES DE voos ANUAIS ----------------------------------------------------------------#
+
+
+str(flights$hour)
+
+
+flights$name_origin = ifelse(flights$origin %in% 'EWR','Newark Liberty',
+
+                                ifelse(flights$origin %in% 'JFK','John F Kennedy','La Guardia'))
+
+
+barplot(table(flights$name_origin),
+
+        main = 'Volume anual de voos por Aeroportos', cex.main = 1.4,
+
+        cex.names = 1.4,
+
+        xlab = "Aeroporto", 
+
+        ylab = "Frequência voos (#)", cex.axis = 1.4,
+
+        ylim = c(0,150000), col= 'dodgerblue', border= 'dodgerblue4')
+
+
+group_by(flights,name_origin) %>% summarise(count = n())
+
+
+# TRATAMENTO DATA ----------------------------------------------------------------#
+
+
+flights$month <- month(flights$time_hour, label = T, abbr = T, locale = 'English')
+
+
+flights$weekday <- wday(flights$time_hour, label = T, abbr = T, locale = 'English')
 
 
 
+# ANÁLISE voos JFK ----------------------------------------------------------------#
+
+
+flights_JFK <- flights %>% filter(name_origin %in% ('John F Kennedy'))
+
+
+barplot(table(flights_JFK$month),
+
+        main = 'Volume Mensal de voos - John F Kennedy', cex.main = 1.4,
+
+        cex.names = 1.2,
+
+        xlab = "Meses", 
+
+        ylab = "Frequência voos (#)", cex.axis = 1.2,
+
+        ylim = c(0,11000), col= 'dodgerblue', border= 'dodgerblue4')   
+
+
+group_by(flights_JFK,month) %>% summarise(count = n())
+
+
+barplot(table(flights_JFK$day),
+
+        main = 'Volume voos por dia do mês - John F Kennedy', cex.main = 1.4,
+
+        cex.names = 0.9,
+
+        xlab = "Dia do Mês",
+
+        ylab = "Frequência voos (#)", cex.axis = 1.2,
+
+        ylim = c(0,4000), col= 'dodgerblue', border= 'dodgerblue4')    
 
 
 
+flights_JFK_day <- group_by(flights_JFK,day) %>% summarise(count = n())
 
+
+volume_dia_JFK$count2 = ifelse(volume_dia_JFK$day ==31,volume_dia_JFK$count/7,
+
+                               ifelse(volume_dia_JFK$day ==30,volume_dia_JFK$count/11,
+
+                                      ifelse(volume_dia_JFK$day ==29,volume_dia_JFK$count/11,
+
+                                             volume_dia_JFK$count/12)))
+
+  
+
+barplot(table(flights_JFK$weekday),
+
+        main = 'Volume voos por dia da semana - John F Kennedy', cex.main = 1.4,
+
+        cex.names = 1.2,
+
+        xlab = "Dia da Semana", 
+
+        ylab = "Frequência voos (#)", cex.axis = 1.2,
+
+        ylim = c(0,20000), col= 'dodgerblue', border= 'dodgerblue4') 
+
+
+group_by(flights_JFK,weekday) %>% summarise(count = n())
+
+
+barplot(table(flights_JFK$hour),
+
+        main = 'Volume voos por hora do dia - John F Kennedy', cex.main = 1.4,
+
+        cex.names = 0.9,
+
+        xlab = "Hora do dia", 
+
+        ylab = "Frequência voos (#)", cex.axis = 1.2,
+
+        ylim = c(0,15000), col= 'dodgerblue', border= 'dodgerblue4') 
+
+
+boxplot(hour ~ weekday, data = flights_JFK,
+
+        main = 'Voos por Hora/dia da semana - John F Kennedy', cex.main = 1.4,
+
+        xlab = 'Dia da Semana',
+
+        ylab = 'Hora do Dia', cex.axis = 1.2,
+
+        horizontal = F, cex.lab = 1.2,
+
+        ylim= c(0,24), col = 'dodgerblue', border= 'dodgerblue4' )
+
+
+
+IQR(flights_JFK$hour)
+
+quantile(flights_JFK$hour,0.25)
+
+quantile(flights_JFK$hour,0.75)
+
+min(flights_JFK$hour)
+
+median(flights_JFK$hour)
+
+
+
+# LA GUARDIA ----------------------------------------------------------------#
+
+
+flights_LGA <- flights %>% filter(name_origin %in% ('La Guardia'))
+
+
+barplot(table(flights_LGA$month),
+
+        main = 'Volume Mensal de voos - La Guardia', cex.main = 1.4,
+
+        cex.names = 0.9,
+
+        xlab = "Meses", 
+
+        ylab = "Frequência voos (#)", cex.axis = 1.2,
+
+        ylim = c(0,11000), col= 'dodgerblue', border= 'dodgerblue4')   
+
+
+group_by(flights_LGA,month) %>% summarise(count = n())
+
+
+barplot(table(flights_LGA$day),
+
+        main = 'Volume voos por dia do mês - La Guardia', cex.main = 1.4,
+
+        cex.names = 0.9,
+
+        xlab = "Dia do Mês", 
+
+        ylab = "Frequência voos (#)", cex.axis = 1.2,
+
+        ylim = c(0,4000), col= 'dodgerblue', border= 'dodgerblue4')         
+
+
+flights_LGA_day <- group_by(flights_LGA,day) %>% summarise(count = n())
+
+
+volume_dia_LGA$count2 = ifelse(volume_dia_LGA$day ==31,volume_dia_LGA$count/7,
+
+                               ifelse(volume_dia_LGA$day ==30,volume_dia_LGA$count/11,
+
+                                      ifelse(volume_dia_LGA$day ==29,volume_dia_LGA$count/11,
+
+                                             volume_dia_LGA$count/12)))
+
+
+barplot(table(flights_LGA$weekday),
+
+        main = 'Volume voos por dia da semana - La Guardia', cex.main = 1.4,
+
+        cex.names = 0.9,
+
+        xlab = "Dia da Semana", 
+
+        ylab = "Frequência voos (#)", cex.axis = 1.2,
+
+        ylim = c(0,20000), col= 'dodgerblue', border= 'dodgerblue4') 
+
+
+group_by(flights_LGA,weekday) %>% summarise(count = n())
+
+
+barplot(table(flights_LGA$hour),
+
+        main = 'Volume voos por hora do dia - La Guardia', cex.main = 1.4,
+
+        cex.names = 0.9,
+
+        xlab = "Hora do dia", 
+
+        ylab = "Frequência voos (#)", cex.axis = 1.2,
+
+        ylim = c(0,15000), col= 'dodgerblue', border= 'dodgerblue4') 
+
+
+boxplot(hour ~ weekday, data = flights_LGA,
+
+        main = 'voos por Hora/dia da semana - La Guardia', cex.main = 1.4,
+
+        xlab = 'Dia da Semana',
+
+        ylab = 'Hora do Dia', cex.axis = 1.0,
+
+        horizontal = F, cex.lab = 1.2,
+
+        ylim= c(0,24), col = 'dodgerblue', border= 'dodgerblue4' )
+
+
+flights_LGA_wknd <- flights_LGA %>% filter(weekday %in% c("Sun"))
+
+IQR(flights_LGA_wknd$hour)
+
+quantile(flights_LGA_wknd$hour,0.25)
+
+quantile(flights_LGA_wknd$hour,0.75)
+
+min(flights_LGA_wknd$hour)
+
+max(flights_LGA_wknd$hour)
+
+
+flights_LGA_du <- flights_LGA %>% filter(weekday %in% c("Mon","Tue","Wed","Thu","Fri","Sat"))
+
+IQR(flights_LGA_du$hour)
+
+quantile(flights_LGA_du$hour,0.25)
+
+quantile(flights_LGA_du$hour,0.75)
+
+min(flights_LGA_du$hour)
+
+max(flights_LGA_du$hour)
+
+
+
+# NEWARK LIBERTY ----------------------------------------------------------------#
+
+
+flights_EWR <- flights %>% filter(name_origin %in% ('Newark Liberty'))
+
+
+barplot(table(flights_EWR$month),
+
+        main = 'Volume Mensal de voos - Newark Liberty', cex.main = 1.4,
+
+        cex.names = 0.9,
+
+        xlab = "Meses", 
+
+        ylab = "Frequência voos (#)", cex.axis = 1.2,
+
+        ylim = c(0,11000), col= 'dodgerblue', border= 'dodgerblue4')  
+
+
+group_by(flights_EWR,month) %>% summarise(count = n())
+
+
+barplot(table(flights_EWR$day),
+
+        main = 'Volume voos por dia do mês - Newark Liberty', cex.main = 1.4,
+
+        cex.names = 0.9,
+
+        xlab = "Dia do Mês", 
+
+        ylab = "Frequência voos (#)", cex.axis = 1.2,
+
+        ylim = c(0,4000), col= 'dodgerblue', border= 'dodgerblue4')  
+
+
+volume_dia_EWR <- group_by(flights_EWR,day) %>% summarise(count = n())
+
+
+volume_dia_EWR$count2 = ifelse(volume_dia_EWR$day ==31,volume_dia_EWR$count/7,
+
+                               ifelse(volume_dia_EWR$day ==30,volume_dia_EWR$count/11,
+
+                                      ifelse(volume_dia_EWR$day ==29,volume_dia_EWR$count/11,
+
+                                             volume_dia_EWR$count/12)))
+
+
+barplot(table(volume_dia_EWR$day),
+
+        main = 'Volume voos por dia do mês - Newark Liberty', cex.main = 1.4,
+
+        cex.names = 0.9,
+
+        xlab = "Dia do Mês", 
+
+        ylab = "Frequência voos (#)", cex.axis = 1.2,
+
+        ylim = c(0,400), col= 'dodgerblue', border= 'dodgerblue4')  
+
+  
+
+  
+
+barplot(table(flights_EWR$weekday),
+
+        main = 'Volume voos por dia da semana - Newark Liberty', cex.main = 1.4,
+
+        cex.names = 0.9,
+
+        xlab = "Dia da Semana", 
+
+        ylab = "Frequência voos (#)", cex.axis = 1.2,
+
+        ylim = c(0,20000), col= 'dodgerblue', border= 'dodgerblue4') 
+
+
+group_by(flights_EWR,weekday) %>% summarise(count = n())
+
+
+barplot(table(flights_EWR$hour),
+
+        main = 'Volume voos por hora do dia - Newark Liberty', cex.main = 1.4,
+
+        cex.names = 0.9,
+
+        xlab = "Hora do dia", 
+
+        ylab = "Frequência voos (#)", cex.axis = 1.2,
+
+        ylim = c(0,15000), col= 'dodgerblue', border= 'dodgerblue4') 
+
+
+IQR(flights_EWR$hour)
+
+quantile(flights_EWR$hour,0.25)
+
+quantile(flights_EWR$hour,0.75)
+
+
+par(mar = rep(2, 4))
+
+boxplot(flights_EWR$hour,
+
+        main = 'Voos por hora - Newark Liberty', cex.main = 1.4,
+
+        xlab = 'Dia da Semana', cex.axis = 1.2,
+
+        horizontal = F, cex.lab = 1.2,
+
+        ylim= c(0,24), col = 'dodgerblue', border= 'dodgerblue4' )
+
+
+boxplot(hour ~ weekday, data = flights_EWR,
+
+        main = 'voos por Hora/dia da semana - Newark Liberty', cex.main = 1.4,
+
+        xlab = 'Dia da Semana',
+
+        ylab = 'Hora do Dia', cex.axis = 1.0,
+
+        horizontal = F, cex.lab = 1.2,
+
+        ylim= c(0,24), col = 'dodgerblue', border= 'dodgerblue4' )
+
+
+flights_EWR_wknd <- flights_EWR %>% filter(weekday %in% c("Sat","Sun"))
+
+IQR(flights_EWR_wknd$hour)
+
+quantile(flights_EWR_wknd$hour,0.25)
+
+quantile(flights_EWR_wknd$hour,0.75)
+
+min(flights_EWR_wknd$hour)
+
+
+flights_EWR_du <- flights_EWR %>% filter(weekday %in% c("Mon","Tue","Wed","Thu","Fri"))
+
+IQR(flights_EWR_du$hour)
+
+quantile(flights_EWR_du$hour,0.25)
+
+quantile(flights_EWR_du$hour,0.75)
+
+min(flights_EWR_du$hour)
+
+max(flights_EWR_du$hour)
+
+
+# COMPANHIAS AÉREAS ----------------------------------------------------------------#
+
+
+flights_airlines <- left_join(flights,airlines, by = "carrier")
+
+
+barplot(table(flights_airlines$name),
+
+        main = 'Volume anual de voos por Companhia Aérea', cex.main = 1.4,
+
+        cex.names = 0.66,
+
+        xlab = , 
+
+        ylab = , cex.axis = 1.0,
+
+        ylim = c(0,60000), col= 'dodgerblue', border= 'dodgerblue4',
+
+        las=2,angle=90)
+
+
+par(mar=c(9,4,2,2))
+
+
+boxplot(distance ~ name, data = flights_airlines,
+
+        main = 'Distância voos por Companhias Aéreas', cex.main = 1.3,
+
+        xlab = '',
+
+        ylab = 'Distância (milhas)', cex.axis = 0.7,
+
+        horizontal = F, cex.lab = 1.0,
+
+        ylim= c(0,5400), col = 'dodgerblue', border= 'dodgerblue4',
+
+        las=2,angle=90)
+
+
+group_by(flights_airlines,name) %>% summarise(count = n(),
+
+                                   mean = mean(distance, na.rm = TRUE),
+
+                                   sd = sd(distance, na.rm = TRUE),
+
+                                   var = var(distance, na.rm = TRUE),
+
+                                   min = min(distance, na.rm = TRUE),
+
+                                   max = max(distance, na.rm = TRUE))
+
+
+ggplot(data = flights_airlines) + 
+
+  geom_point(mapping = aes(x = distance, y = air_time, color = name))
+
+
+
+boxplot(air_time ~ name, data = flights_airlines,
+
+        main = 'Duração voos por Companhias Aéreas', cex.main = 1.3,
+
+        xlab = '',
+
+        ylab = 'Duração (minutos)', cex.axis = 0.7,
+
+        horizontal = F, cex.lab = 1.0,
+
+        ylim= c(0,800), col = 'dodgerblue', border= 'dodgerblue4',
+
+        las=2,angle=90)
+
+
+group_by(flights_airlines,name) %>% summarise(count = n(),
+
+                                    mean = mean(air_time, na.rm = TRUE),
+
+                                    sd = sd(air_time, na.rm = TRUE),
+
+                                    var = var(air_time, na.rm = TRUE),
+
+                                    min = min(air_time, na.rm = TRUE),
+
+                                    max = max(air_time, na.rm = TRUE))
 
 
 # ====FIM - ISABELA=================================================================================
