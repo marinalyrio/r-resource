@@ -349,15 +349,86 @@ ggplot(UA_AIRPLANE, aes(x = model, y =year, color = manufacturer, label = seats)
 # • Análise IV: Análises gerais que vcs identificarem serem interessantes. Exercitem a criatividade!
 # Descrição dos dados/ tratamentos aplicados, junção script R
 
+#analisar variáveis
+
+str(nyc_airlines); summary(nyc_airlines)
+str(nyc_airports); summary(nyc_airports)
+str(nyc_flights); summary(nyc_flights)
+str(nyc_planes); summary(nyc_planes)
+str(nyc_weather); summary(nyc_weather)
 
 
+#transformar variáveis do dt flights para factor
+
+nyc_flights$flight <- as.factor(nyc_flights$flight)
+
+#converter variável time_hour de factor para data.
+
+nyc_flights$time_hour <- ymd_hms(nyc_flights$time_hour)
+
+#criar variáveis factor mês e dia da semana e estações do ano para ampliar possibilidade de análises.
+
+nyc_flights$month_label <- month(nyc_flights$time_hour, label = TRUE)
+nyc_flights$wday <- wday(nyc_flights$time_hour, label = TRUE, locale = 'English')
+nyc_flights$seasons = ifelse(nyc_flights$month_label %in% c('jun', 'jul', 'aug'),'Summer',
+                              ifelse(nyc_flights$month_label %in% c('sep','oct','nov'),'Autumn',
+                                     ifelse(nyc_flights$month_label %in% c('dec','jan','feb'),'Winter','Spring')))
 
 
+#criar variável date
+nyc_flights$date <- str_c(nyc_flights$year, nyc_flights$month,
+                                   nyc_flights$day, sep = '/')
+
+# Criar variável com a categorização dos principais feriados/datas importantes americanos. Critério. Dia do feriado +/- dois dias.
+# Ano novo por limitação da base, será considerado 30/12 e 31/12.
+
+#Super Bowl: 01/03/2013, 02/03/2013, 03/03/2013, 04/03/2013, 05/03/2013
+#Independence Day: 02/07/2013, 03/07/2013, 04/07/2013, 05/07/2013, 06/07/2013
+#Labor Day: 31/08/2013, 01/09/2013, 02/09/2013, 03/09/2013, 04/09/2013
+#Thanksgiving: 26/11/2013, 27/11/2013, 28/11/2013, 29/11/2013, 30/09/2013
+#Christmas: 23/12/2013, 24/12/2013, 25/12/2013, 26/12/2013, 27/12/2013
+#New Year's Day: 30/12/2013, 31/12/2013
+
+nyc_flights$holiday = ifelse(nyc_flights$date %in% c('2013/3/01', '2013/3/1', '2013/3/3', '2013/3/4', '2013/3/5'),'Superbowl',
+                              ifelse(nyc_flights$date %in% c('2013/7/2', '2013/7/3', '2013/7/4', '2013/7/5', '2013/7/6'),'Independence Day',
+                                     ifelse(nyc_flights$date %in% c('2013/8/31', '2013/9/1', '2013/9/2', '2013/9/3', '2013/9/4'),'Labor Day',
+                                            ifelse(nyc_flights$date %in% c('2013/11/26', '2013/11/27', '2013/11/28', '2013/11/29', '2013/11/30'),'Thanksgivings',
+                                                   ifelse(nyc_flights$date %in% c('2013/12/23', '2013/12/24', '2013/12/25', '2013/12/26', '2013/12/27'),'Christmas',
+                                                          ifelse(nyc_flights$date %in% c('2013/12/30', '2013/12/31'),'New Years Day','Regular'))))))
+
+#transformar variável date em data.
+nyc_flights$date <- ymd(nyc_flights$date)
 
 
+#criar variável chave ano + mês + dia + hora + origem nos dts flights e weather. Incluir separador para evitar duplicidade de observações quando realizar o join.
 
+nyc_flights$time_hour_key <- str_c(nyc_flights$year, nyc_flights$month,
+                                   nyc_flights$day, nyc_flights$hour,
+                                   nyc_flights$origin, sep = '-')
 
+nyc_weather$time_hour_key <- str_c(nyc_weather$year, nyc_weather$month,
+                                   nyc_weather$day, nyc_weather$hour,
+                                   nyc_weather$origin, sep = '-')
 
+#excluir colunas do dt weather para evitar duplicidade de colunas quando realizar o join
+
+nyc_weather <- nyc_weather %>% select(-year, -month, -day, -hour, -origin, -time_hour)
+
+#Para realizar o join entre os dts flight e airports, substituir label da variável faa do dt nyc_airports para origin. 
+colnames(nyc_airports)[which(names(nyc_airports) == 'faa')] <- 'origin'
+
+#alterar variável year do dt planes, relativo ao ano de fabricação da aeronave, para não confundir com o year, ano da observação da amostra.
+colnames(nyc_planes)[which(names(nyc_planes) == 'year')] <- 'year_manu'
+
+#Iniciar leftjoins das bases. Left join escolhido para trazer as informações coincidentes com o dt principal, nyc_flights
+
+nyc_fli_airl <- left_join(nyc_flights, nyc_airlines, by = 'carrier')
+
+nyc_fli_airl_airp <- left_join(nyc_fli_airl, nyc_airports, by = 'origin')
+
+nyc_fli_airl_aip_pl <- left_join(nyc_fli_airl_airp, nyc_planes, by = 'tailnum')
+
+nyc_complete <- left_join(nyc_fli_airl_aip_pl, nyc_weather, by = 'time_hour_key')
 
 
 
