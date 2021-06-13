@@ -399,6 +399,9 @@ nyc_flights$holiday = ifelse(nyc_flights$date %in% c('2013/3/01', '2013/3/1', '2
 #transformar variável date em data.
 nyc_flights$date <- ymd(nyc_flights$date)
 
+#criar variável relativa ao atraso. Conceito adotado para categorizar o atraso: dep_delay >= 60 minutos
+
+nyc_flights$delay = ifelse(nyc_flights$dep_delay >= 60,'Delayed', 'Not Delayed')
 
 #criar variável chave ano + mês + dia + hora + origem nos dts flights e weather. Incluir separador para evitar duplicidade de observações quando realizar o join.
 
