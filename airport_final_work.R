@@ -149,7 +149,64 @@ ggplot(data = flights_weather3) +
   scale_fill_manual(values = c('atrasado' = 'orange', 'pontual' = 'dodgerblue1'))+
   theme(axis.text.x = element_text(angle = 90, size = 12))
 
+#3.2 Dia do mes
 
+#3.2.1 Por quantidade
+
+ggplot(data = flights_weather4) + 
+  geom_bar(mapping = aes(x = factor(day)),color = 'dodgerblue4', fill = 'dodgerblue1', position = "dodge") +
+  xlab("Dia") +
+  ylab("Atrasos") +
+  ggtitle("Quantidade de vôos atrasados por dia do mês") +
+  theme(axis.text.x = element_text(angle = 90, size = 12))
+
+
+
+#3.2.2 Percentual
+
+ggplot(data = flights_weather3) + 
+  geom_bar(mapping = aes(x = factor(day), fill = atrasos), color = 'dodgerblue4', position = "fill") +
+  xlab("Dia") +
+  ylab("Atrasos") +
+  ggtitle("Percentual de vôos atrasados por dia do mês") +
+  scale_y_continuous(labels = scales::percent)+
+  scale_fill_manual(values = c('atrasado' = 'orange', 'pontual' = 'dodgerblue1'))+
+  theme(axis.text.x = element_text(angle = 90, size = 12))
+
+#3.3 Dia da semana
+
+
+#3.3.1 Por quantidade
+
+#criação de variável dias da semana para dataset de voos atrasados
+flights_weather6 <- flights_weather4
+flights_weather6$wday <- wday(flights_weather6$time_hour, label = TRUE, locale = 'English')
+levels(flights_weather5$wday)
+
+ggplot(data = flights_weather6) + 
+  geom_bar(mapping = aes(x = wday),color = 'dodgerblue4', fill = 'dodgerblue1', position = "dodge") +
+  xlab("Dia") +
+  ylab("Atrasos") +
+  ggtitle("Quantidade de voos atrasados por dia da semana") +
+  theme(axis.text.x = element_text(angle = 90, size = 10))
+
+
+
+#3.3.2 Percentual
+
+#criação de variável dias da semana para dataset de todos os vôos
+flights_weather5 <- flights_weather3
+flights_weather5$wday <- wday(flights_weather3$time_hour, label = TRUE, locale = 'English')
+levels(flights_weather5$wday)
+
+ggplot(data = flights_weather5) + 
+  geom_bar(mapping = aes(x = wday, fill = atrasos), color = 'dodgerblue4', position = "fill") +
+  xlab("Dia") +
+  ylab("Atrasos") +
+  ggtitle("Percentual de voos atrasados por dia da semana") +
+  scale_y_continuous(labels = scales::percent)+
+  scale_fill_manual(values = c('atrasado' = 'orange', 'pontual' = 'dodgerblue1'))+
+  theme(axis.text.x = element_text(angle = 90, size = 12))
 
 
 
