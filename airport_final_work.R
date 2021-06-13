@@ -33,7 +33,7 @@ View(weather)
 
 
 
-#teste online
+
 
 
 
@@ -124,9 +124,10 @@ data(mpg, package="ggplot2")
 View(mpg)
 
 
-# voos que não partiram (cancelados por algum motivo)
+# voos que não partiram (cancelados por algum motivo) ----------------------------------------------
 canceled_flight <- filter(UA,  is.na(dep_time))
 View(canceled_flight)
+str(canceled_flight)
 
 nrow(canceled_flight)
 # 686
@@ -137,25 +138,63 @@ nrow(filter(canceled_flight, origin == 'JFK'))
 nrow(filter(canceled_flight, origin == 'LGA'))
 # 207
 
+# Voos com atraso maior ou igual a 1h----------------------------------------------------------------
+delay_flight <- filter(UA, dep_delay >= 60)
+View(delay_flight)
+
+nrow(delay_flight)
+# 3899
+
+# media de atraso por mês---------------------------------------------------------------------------
+
+nrow(filter(delay_flight, month == 1))
+nrow(filter(delay_flight, month == 2))
+nrow(filter(delay_flight, month == 3))
+nrow(filter(delay_flight, month == 4))
+nrow(filter(delay_flight, month == 5))
+nrow(filter(delay_flight, month == 6))
+nrow(filter(delay_flight, month == 7))
+nrow(filter(delay_flight, month == 8))
+nrow(filter(delay_flight, month == 9))
+nrow(filter(delay_flight, month == 10))
+nrow(filter(delay_flight, month == 11))
+nrow(filter(delay_flight, month == 12))
+
+
+ggplot(delay_flight, aes(x = month, y = dep_delay, color = month))+
+  geom_boxplot()
 
 
 
+ggplot(delay_flight, aes(x = month, y = dep_delay, color = month))+
+  geom_point()
+
+ggplot(delay_flight, aes(x = month, color = month))+
+  geom_bar()
 
 
+delay_flight_V2 <- tibble(delay_flight)
+delay_flight_V2$month <- gsub(1, 'JAN', delay_flight$month)
+delay_flight_V2$month <- gsub(2, 'FEB', delay_flight$month)
+delay_flight_V2$month <- gsub(3, 'MAR', delay_flight$month)
+delay_flight_V2$month <- gsub(4, 'APR', delay_flight$month)
+delay_flight_V2$month <- gsub(5, 'MAY', delay_flight$month)
+delay_flight_V2$month <- gsub(6, 'JUN', delay_flight$month)
+delay_flight_V2$month <- gsub(7, 'JUL', delay_flight$month)
+delay_flight_V2$month <- gsub(8, 'AUG', delay_flight$month)
+delay_flight_V2$month <- gsub(9, 'SEP', delay_flight$month)
+delay_flight_V2$month <- gsub(10, 'OCT', delay_flight$month)
+delay_flight_V2$month <- gsub(11, 'NOV', delay_flight$month)
+delay_flight_V2$month <- gsub(12, 'DEZ', delay_flight$month)
 
 
+name_months <- c('JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC')
 
+A <- month.abb(delay_flight$month)
 
+delay_flight_V2$month_name <- name_months[delay_flight_V2$month]
 
-
-
-
-
-
-
-
-
-
+View(delay_flight_V2)
 
 
 # Tipo e idade da frota. ---------------------------------------------------------------------------
