@@ -64,10 +64,10 @@ flights_weather2 <- flights_weather %>% filter(atrasos == 'atrasado' | atrasos =
 
 #2.1.1 quantidade de voos
 ggplot(data = flights_weather4, aes(x = dep_delay)) + 
-  geom_histogram(binwidth = 30, fill = 'dodgerblue1') +
+  geom_histogram(binwidth = 30,color = 'dodgerblue4', fill = 'dodgerblue1') +
   xlab("Tempo de atraso (minutos)") +
-  ylab("Vôos") +
-  ggtitle("Frequência de vôos atrasados por tempo")+
+  ylab("Voos") +
+  ggtitle("Frequência de voos atrasados por tempo")+
   scale_x_continuous(limits = c(30,500), breaks = seq(30,500, by = 30))
 
 #2.1.2 Percentual de vôos
@@ -75,8 +75,8 @@ ggplot(data = flights_weather4, aes(x = dep_delay)) +
 ggplot(data = flights_weather4, aes(x = dep_delay)) + 
   geom_boxplot(fill = 'dodgerblue1') +
   xlab("Tempo de atraso") +
-  ylab("Vôos") +
-  ggtitle("Distribuição vôos atrasados por tempo de atraso")+
+  ylab("Voos") +
+  ggtitle("Distribuição voos atrasados por tempo de atraso")+
   scale_x_continuous(limits = c(30,500), breaks = seq(30,500, by = 30))+
   theme(axis.ticks.y = element_blank(), axis.text.y = element_blank())
 
@@ -108,7 +108,7 @@ ggplot(data = flights_weather3) +
   geom_bar(mapping = aes(x = name, fill = atrasos), color = 'dodgerblue4', position = "fill") +
   xlab("Cia Aérea") +
   ylab("Atrasos") +
-  ggtitle("Percentual de vôos atrasados por Cia Aérea") +
+  ggtitle("Percentual de voos atrasados por Cia Aérea") +
   scale_y_continuous(labels = scales::percent)+
   scale_fill_manual(values = c('atrasado' = 'orange', 'pontual' = 'dodgerblue1'))+
   theme(axis.text.x = element_text(angle = 90, size = 12))
@@ -144,7 +144,7 @@ ggplot(data = flights_weather3) +
   geom_bar(mapping = aes(x = month, fill = atrasos), color = 'dodgerblue4', position = "fill") +
   xlab("Mês") +
   ylab("Atrasos") +
-  ggtitle("Percentual de vôos atrasados por Mês") +
+  ggtitle("Percentual de voos atrasados por Mês") +
   scale_y_continuous(labels = scales::percent)+
   scale_fill_manual(values = c('atrasado' = 'orange', 'pontual' = 'dodgerblue1'))+
   theme(axis.text.x = element_text(angle = 90, size = 12))
@@ -157,7 +157,7 @@ ggplot(data = flights_weather4) +
   geom_bar(mapping = aes(x = factor(day)),color = 'dodgerblue4', fill = 'dodgerblue1', position = "dodge") +
   xlab("Dia") +
   ylab("Atrasos") +
-  ggtitle("Quantidade de vôos atrasados por dia do mês") +
+  ggtitle("Quantidade de voos atrasados por dia do mês") +
   theme(axis.text.x = element_text(angle = 90, size = 12))
 
 
@@ -168,7 +168,7 @@ ggplot(data = flights_weather3) +
   geom_bar(mapping = aes(x = factor(day), fill = atrasos), color = 'dodgerblue4', position = "fill") +
   xlab("Dia") +
   ylab("Atrasos") +
-  ggtitle("Percentual de vôos atrasados por dia do mês") +
+  ggtitle("Percentual de voos atrasados por dia do mês") +
   scale_y_continuous(labels = scales::percent)+
   scale_fill_manual(values = c('atrasado' = 'orange', 'pontual' = 'dodgerblue1'))+
   theme(axis.text.x = element_text(angle = 90, size = 12))
@@ -209,6 +209,27 @@ ggplot(data = flights_weather5) +
   theme(axis.text.x = element_text(angle = 90, size = 12))
 
 
+#4 Aeroportos
+
+#4.1 Por quantidade
+
+ggplot(data = flights_weather6) + 
+  geom_bar(mapping = aes(x = origin),color = 'dodgerblue4', fill = 'dodgerblue1', position = "dodge") +
+  xlab("Aeroporto") +
+  ylab("Atrasos") +
+  ggtitle("Quantidade de voos atrasados por aeroporto") +
+  theme(axis.text.x = element_text(size = 10))
+
+#4.2 Percentual
+
+ggplot(data = flights_weather5) + 
+  geom_bar(mapping = aes(x = origin, fill = atrasos), color = 'dodgerblue4', position = "fill") +
+  xlab("Aeroporto") +
+  ylab("Atrasos") +
+  ggtitle("Percentual de voos atrasados por aeroporto") +
+  scale_y_continuous(labels = scales::percent)+
+  scale_fill_manual(values = c('atrasado' = 'orange', 'pontual' = 'dodgerblue1'))+
+  theme(axis.text.x = element_text(size = 12))
 
 
 
