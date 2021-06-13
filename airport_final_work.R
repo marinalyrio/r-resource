@@ -46,19 +46,16 @@ View(weather)
   # tempo e por cia área. Quais são os períodos que apresentam um % maior de voos com atraso? Quais são as top
   # 3 cia em termos de atraso? Qual é o aeroporto melhor e pior em termos de pontualidade?
 
-#1 join flights & weather e tratamentos
+# 1.Tratamentos pré-análise 
+
+#join flights & weather e tratamentos
 flights_weather <- left_join(nyc_flights, nyc_weather)
-str(flights_weather)
 
-
+#criação variável atrasos e transformação para factor
 flights_weather$atrasos = ifelse(flights_weather$dep_delay >= 60, "atrasado", 'pontual')
-summary(flights_weather)
-
 flights_weather <- flights_weather %>% transform(atrasos = as.factor(atrasos))
-summary(flights_weather)
 
-nyc_airports <- tibble(read.csv2("./data/inf_esta/nyc_airports.csv", sep = ",", stringsAsFactors = TRUE))
-
+#eliminação de NAs
 flights_weather2 <- flights_weather %>% filter(atrasos == 'atrasado' | atrasos == 'pontual')
 
 #2. analises atrasos
