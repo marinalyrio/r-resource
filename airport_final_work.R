@@ -775,14 +775,47 @@ ggplot(data = flights_weather5) +
 # Caracterização
 # Tipo e idade da frota.
 
+# início--------------------------------------------------------------------------------------------
+# Fonte: http://www.cookbook-r.com/Graphs/Multiple_graphs_on_one_page_(ggplot2)/
+# Plotar multiplos graficos
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  require(grid)
 
-View(airlines)
-View(airports)
-View(flights)
-View(planes)
-View(weather)
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
 
-# Obtendo Top 5 CIA AÉREA
+  numPlots = length(plots)
+
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                     ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+
+  if (numPlots==1) {
+    print(plots[[1]])
+
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+# Fim-----------------------------------------------------------------------------------------------
+
+# Obtendo o nome e afrequência de voos das Top 5 CIA AÉREA :::::::::::::::::::::::::::::::::::::::::
 flight_per_airline <- table(flights$carrier)
 flight_per_airline <- sort(flight_per_airline, decreasing = TRUE)
 
@@ -794,26 +827,97 @@ top_5_airlines <- rename(top_5_airlines, carrier=Var1, total_flight=Freq)
 
 View(top_5_airlines)
 
+# Novo dataframe contendo apenas os dados das top 5 CIA aéreas
+t5_airline <- filter(flights, carrier %in% c('UA', 'B6', 'EV', 'DL', 'AA'))
+View(t5_airline)
 
-# Análise do panorama de voos:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+# Análise do panorama de voos por CIA ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # United Air Lines Inc.-----------------------------------------------------------------------------
 UA <- filter(flights, carrier == 'UA')
 View(UA)
 
 # O aeroporto EWR é massivamente o aeroporto de origem mais utilizado pela cia UA (United Air Lines Inc.)
-ggplot(UA, aes(x = origin, y = dest))+
-  geom_point()
+UAA <- ggplot(UA, aes(x = origin))+
+  geom_bar(fill = 'dodgerblue')+
+  xlab('Origin departure - United Air Lines ')
+
+
+B6 <- filter(flights, carrier == 'B6')
+View(B6)
+
+BB6 <- ggplot(B6, aes(x = origin))+
+  geom_bar(fill = 'dodgerblue')+
+  xlab('Origin departure - JetBlue Airways')
+
+
+EV <- filter(flights, carrier == 'EV')
+View(EV)
+
+EVV <- ggplot(EV, aes(x = origin))+
+  geom_bar(fill = 'dodgerblue')+
+  xlab('Origin departure - ExpressJet Airlines')
+
+
+DL <- filter(flights, carrier == 'DL')
+View(DL)
+
+DLL <- ggplot(DL, aes(x = origin))+
+  geom_bar(fill = 'dodgerblue')+
+  xlab('Origin departure - Delta Air Lines')
+
+
+AA <- filter(flights, carrier == 'AA')
+View(AA)
+
+AAA <- ggplot(AA, aes(x = origin))+
+  geom_bar(fill = 'dodgerblue')+
+  xlab('Origin departure - American Airlines')
+
+
+
+multiplot(UAA, BB6, EVV, DLL, AAA, cols = 2)
+
+
+
+
+
 
 
 # distâncias----------------------------------------------------------------------------------------
-ggplot(UA, aes(x = origin, dest, color = air_time))+
-  geom_point()
-
 ggplot(UA, aes(x = distance, dest, color = origin))+
   geom_point(aes(size = distance))+
   xlab('Distance in miles')+
-  ylab('Final destinantion')
+  ylab('Final destinantion')+
+  ggtitle('United Air Lines')
 
+
+ggplot(B6, aes(x = distance, dest, color = origin))+
+  geom_point(aes(size = distance))+
+  xlab('Distance in miles')+
+  ylab('Final destinantion')+
+  ggtitle('JetBlue Airways')
+
+
+ggplot(EV, aes(x = distance, dest, color = origin))+
+  geom_point(aes(size = distance))+
+  xlab('Distance in miles')+
+  ylab('Final destinantion')+
+  ggtitle('ExpressJet Airlines')
+
+
+ggplot(DL, aes(x = distance, dest, color = origin))+
+  geom_point(aes(size = distance))+
+    xlab('Distance in miles')+
+    ylab('Final destinantion')+
+    ggtitle('Delta Air Lines')
+
+
+ggplot(AA, aes(x = distance, dest, color = origin))+
+  geom_point(aes(size = distance))+
+  xlab('Distance in miles')+
+  ylab('Final destinantion')+
+  ggtitle('American Airlines')
 
 
 # durações típicas ---------------------------------------------------------------------------------
@@ -821,29 +925,115 @@ UA$time_hour <- ymd_hms(UA$time_hour)
 typeof(UA$time_hour)
 View(UA)
 
-ggplot(UA, aes(x = dest, y = hour, color = origin == 'EWR'))+
-  geom_point()
+ggplot(t5_airline, aes(x = distance, y= air_time, color = carrier))+
+  geom_point()+
+  xlab('Distance in miles')+
+  ylab('Air time duration (minutes)')
 
-ggplot(UA, aes(x = dep_delay, fill = origin))+
-  geom_bar(position = position_dodge(preserve = 'single'))
 
-data(mpg, package="ggplot2")
-View(mpg)
+ggplot(t5_airline, aes(x = carrier, y = air_time, ))+
+  geom_boxplot(color = 'dodgerblue',  border= 'dodgerblue4')+
+  xlab('Carrier')+
+  ylab('Air time duration (minutes)')
+
 
 
 # voos que não partiram (cancelados por algum motivo) ----------------------------------------------
-canceled_flight <- filter(UA,  is.na(dep_time))
-View(canceled_flight)
-str(canceled_flight)
+canceled_flight_UA <- filter(UA,  is.na(dep_time))
+View(canceled_flight_UA)
+str(canceled_flight_UA)
 
-nrow(canceled_flight)
+nrow(canceled_flight_UA)
 # 686
-nrow(filter(canceled_flight, origin == 'EWR'))
+nrow(filter(canceled_flight_UA, origin == 'EWR'))
 # 435
-nrow(filter(canceled_flight, origin == 'JFK'))
+nrow(filter(canceled_flight_UA, origin == 'JFK'))
 # 44
-nrow(filter(canceled_flight, origin == 'LGA'))
+nrow(filter(canceled_flight_UA, origin == 'LGA'))
 # 207
+
+can_UA <- ggplot(canceled_flight_UA, aes(x = origin))+
+  geom_bar(fill = 'dodgerblue')+
+  xlab('Origin departure')+
+  ylab('Canceled flights - United Air Lines')
+
+
+
+
+canceled_flight_B6 <- filter(B6,  is.na(dep_time))
+
+nrow(canceled_flight_B6)
+# 636
+nrow(filter(canceled_flight_B6, origin == 'EWR'))
+# 99
+nrow(filter(canceled_flight_B6, origin == 'JFK'))
+# 141
+nrow(filter(canceled_flight_B6, origin == 'LGA'))
+# 396
+
+can_B6 <- ggplot(canceled_flight_B6, aes(x = origin))+
+  geom_bar(fill = 'dodgerblue')+
+  xlab('Origin departure')+
+  ylab('Canceled flights - JetBlue Airways')
+
+
+
+canceled_flight_EV <- filter(EV,  is.na(dep_time))
+nrow(canceled_flight_EV)
+# 2817
+nrow(filter(canceled_flight_EV, origin == 'EWR'))
+# 2164
+nrow(filter(canceled_flight_EV, origin == 'JFK'))
+# 82
+nrow(filter(canceled_flight_EV, origin == 'LGA'))
+# 571
+
+can_EV <- ggplot(canceled_flight_EV, aes(x = origin))+
+  geom_bar(fill = 'dodgerblue')+
+  xlab('Origin departure')+
+  ylab('Canceled flights - ExpressJet Airlines')
+
+
+canceled_flight_DL <- filter(DL,  is.na(dep_time))
+
+nrow(canceled_flight_DL)
+# 349
+nrow(filter(canceled_flight_DL, origin == 'EWR'))
+# 39
+nrow(filter(canceled_flight_DL, origin == 'JFK'))
+# 100
+nrow(filter(canceled_flight_DL, origin == 'LGA'))
+# 210
+
+can_DL <- ggplot(canceled_flight_DL, aes(x = origin))+
+  geom_bar(fill = 'dodgerblue')+
+  xlab('Origin departure')+
+  ylab('Canceled flights - Delta Air Lines')
+
+
+
+canceled_flight_AA <- filter(AA,  is.na(dep_time))
+
+nrow(canceled_flight_AA)
+# 636
+nrow(filter(canceled_flight_AA, origin == 'EWR'))
+# 99
+nrow(filter(canceled_flight_AA, origin == 'JFK'))
+# 141
+nrow(filter(canceled_flight_AA, origin == 'LGA'))
+# 396
+
+can_AA <- ggplot(canceled_flight_AA, aes(x = origin))+
+  geom_bar(fill = 'dodgerblue')+
+  xlab('Origin departure')+
+  ylab('Canceled flights - American Airlines')
+
+
+multiplot(can_UA, can_B6, can_EV, can_DL, can_AA, cols = 2)
+
+
+
+
 
 # Voos com atraso maior ou igual a 1h----------------------------------------------------------------
 delay_flight <- filter(UA, dep_delay >= 60)
@@ -853,7 +1043,6 @@ nrow(delay_flight)
 # 3899
 
 # media de atraso por mês---------------------------------------------------------------------------
-
 nrow(filter(delay_flight, month == 1))
 nrow(filter(delay_flight, month == 2))
 nrow(filter(delay_flight, month == 3))
@@ -867,41 +1056,18 @@ nrow(filter(delay_flight, month == 10))
 nrow(filter(delay_flight, month == 11))
 nrow(filter(delay_flight, month == 12))
 
+delay_flight$month <- month.abb[delay_flight$month]
+delay_flight$month <- toupper(delay_flight$month)
+View(delay_flight)
 
-ggplot(delay_flight, aes(x = month, y = dep_delay, color = month))+
-  geom_boxplot()
+
+ggplot(delay_flight, aes(x = month , y = dep_delay))+
+    geom_boxplot(fill = 'dodgerblue')
 
 
-
-ggplot(delay_flight, aes(x = month, y = dep_delay, color = month))+
-  geom_point()
-
-ggplot(delay_flight, aes(x = month, color = month))+
+ggplot(delay_flight, aes(x = month))+
   geom_bar()
 
-
-delay_flight_V2 <- tibble(delay_flight)
-delay_flight_V2$month <- gsub(1, 'JAN', delay_flight$month)
-delay_flight_V2$month <- gsub(2, 'FEB', delay_flight$month)
-delay_flight_V2$month <- gsub(3, 'MAR', delay_flight$month)
-delay_flight_V2$month <- gsub(4, 'APR', delay_flight$month)
-delay_flight_V2$month <- gsub(5, 'MAY', delay_flight$month)
-delay_flight_V2$month <- gsub(6, 'JUN', delay_flight$month)
-delay_flight_V2$month <- gsub(7, 'JUL', delay_flight$month)
-delay_flight_V2$month <- gsub(8, 'AUG', delay_flight$month)
-delay_flight_V2$month <- gsub(9, 'SEP', delay_flight$month)
-delay_flight_V2$month <- gsub(10, 'OCT', delay_flight$month)
-delay_flight_V2$month <- gsub(11, 'NOV', delay_flight$month)
-delay_flight_V2$month <- gsub(12, 'DEZ', delay_flight$month)
-
-
-name_months <- c('JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC')
-
-A <- month.abb(delay_flight$month)
-
-delay_flight_V2$month_name <- name_months[delay_flight_V2$month]
-
-View(delay_flight_V2)
 
 
 # Tipo e idade da frota. ---------------------------------------------------------------------------
@@ -913,15 +1079,18 @@ UA_AIRPLANE <- select(UA_AIRPLANE, tailnum, year.y, type, manufacturer, model, e
 UA_AIRPLANE <- rename(UA_AIRPLANE, year = year.y)
 View(UA_AIRPLANE)
 
-ggplot(UA_AIRPLANE, aes(x = manufacturer, y =year))+
-  geom_boxplot()
+UA1 <- ggplot(UA_AIRPLANE, aes(x = manufacturer, y =year))+
+  geom_boxplot(col = 'dodgerblue', border= 'dodgerblue4')
+
 
 # Airbus Industrie (1970–2001)
 # fonte: https://en.wikipedia.org/wiki/Airbus
 
-# A frota utilizada pala United Air Lines  é predominantemente da Boeing
+# A frota utilizada pela United Air Lines  é predominantemente da Boeing
 ggplot(UA_AIRPLANE, aes(x = model, y =year, color = manufacturer))+
-  geom_point()
+  geom_point(size = 4) +
+  xlab('Air plane model')+
+  ylab(' Year facture')
 
 
 ggplot(UA_AIRPLANE, aes(x = model, y =year, color = manufacturer, label = seats))+
@@ -929,7 +1098,133 @@ ggplot(UA_AIRPLANE, aes(x = model, y =year, color = manufacturer, label = seats)
   xlab('Air plane model')+
   ylab(' Year facture')
 
+multiplot(UA1, UA2, cols = 2)
+
+# --------------------------------------------------------------------------------------------------
+
+B6_AIRPLANE <- inner_join(B6, planes, by = 'tailnum')
+View(B6_AIRPLANE)
+
+B6_AIRPLANE <- select(B6_AIRPLANE, tailnum, year.y, type, manufacturer, model, engines, seats, speed, engine)
+B6_AIRPLANE <- rename(B6_AIRPLANE, year = year.y)
+View(B6_AIRPLANE)
+
+ggplot(B6_AIRPLANE, aes(x = manufacturer, y =year))+
+  geom_boxplot(col = 'dodgerblue', border= 'dodgerblue4')
+
+# Airbus Industrie (1970–2001)
+# fonte: https://en.wikipedia.org/wiki/Airbus
+
+# A frota utilizada pela United Air Lines  é predominantemente da Boeing
+ggplot(B6_AIRPLANE, aes(x = model, y =year, color = manufacturer))+
+  geom_point(size = 4) +
+  xlab('Air plane model')+
+  ylab(' Year facture')
+
+
+ggplot(B6_AIRPLANE, aes(x = model, y =year, color = manufacturer, label = seats))+
+  geom_text()+
+  xlab('Air plane model')+
+  ylab(' Year facture')
+
+
+# --------------------------------------------------------------------------------------------------
+
+EV_AIRPLANE <- inner_join(EV, planes, by = 'tailnum')
+View(EV_AIRPLANE)
+
+EV_AIRPLANE <- select(EV_AIRPLANE, tailnum, year.y, type, manufacturer, model, engines, seats, speed, engine)
+EV_AIRPLANE <- rename(EV_AIRPLANE, year = year.y)
+View(EV_AIRPLANE)
+
+ggplot(EV_AIRPLANE, aes(x = manufacturer, y =year))+
+  geom_boxplot(col = 'dodgerblue', border= 'dodgerblue4')
+
+# Airbus Industrie (1970–2001)
+# fonte: https://en.wikipedia.org/wiki/Airbus
+
+# A frota utilizada pela United Air Lines  é predominantemente da Boeing
+ggplot(EV_AIRPLANE, aes(x = model, y =year, color = manufacturer))+
+  geom_point(size = 4) +
+  xlab('Air plane model')+
+  ylab(' Year facture')
+
+
+ggplot(EV_AIRPLANE, aes(x = model, y =year, color = manufacturer, label = seats))+
+  geom_text()+
+  xlab('Air plane model')+
+  ylab(' Year facture')
+
+
+# --------------------------------------------------------------------------------------------------
+
+DL_AIRPLANE <- inner_join(DL, planes, by = 'tailnum')
+View(DL_AIRPLANE)
+
+DL_AIRPLANE <- select(DL_AIRPLANE, tailnum, year.y, type, manufacturer, model, engines, seats, speed, engine)
+DL_AIRPLANE <- rename(DL_AIRPLANE, year = year.y)
+View(DL_AIRPLANE)
+
+ggplot(DL_AIRPLANE, aes(x = manufacturer, y =year))+
+  geom_boxplot(col = 'dodgerblue', border= 'dodgerblue4')
+
+# Airbus Industrie (1970–2001)
+# fonte: https://en.wikipedia.org/wiki/Airbus
+
+# A frota utilizada pela United Air Lines  é predominantemente da Boeing
+ggplot(DL_AIRPLANE, aes(x = model, y =year, color = manufacturer))+
+  geom_point(size = 4) +
+  xlab('Air plane model')+
+  ylab(' Year facture')
+
+
+ggplot(DL_AIRPLANE, aes(x = model, y =year, color = manufacturer, label = seats))+
+  geom_text()+
+  xlab('Air plane model')+
+  ylab(' Year facture')
+
+
+# --------------------------------------------------------------------------------------------------
+
+AA_AIRPLANE <- inner_join(AA, planes, by = 'tailnum')
+View(AA_AIRPLANE)
+
+AA_AIRPLANE <- select(AA_AIRPLANE, tailnum, year.y, type, manufacturer, model, engines, seats, speed, engine)
+AA_AIRPLANE <- rename(AA_AIRPLANE, year = year.y)
+View(AA_AIRPLANE)
+
+ggplot(AA_AIRPLANE, aes(x = manufacturer, y =year))+
+  geom_boxplot(col = 'dodgerblue', border= 'dodgerblue4')
+
+# Airbus Industrie (1970–2001)
+# fonte: https://en.wikipedia.org/wiki/Airbus
+
+# A frota utilizada pela United Air Lines  é predominantemente da Boeing
+ggplot(AA_AIRPLANE, aes(x = model, y =year, color = manufacturer))+
+  geom_point(size = 4) +
+  xlab('Air plane model')+
+  ylab(' Year facture')
+
+
+ggplot(AA_AIRPLANE, aes(x = year, y =model, color = manufacturer, label = seats))+
+  geom_text()+
+  xlab('Air plane model')+
+  ylab(' Year facture')
+
+
+
 # ====FIM - AMAURI====================================================================================
+
+
+
+
+
+
+
+
+
+
+
 
 # :::MARCIA:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # • Análise IV: Análises gerais que vcs identificarem serem interessantes. Exercitem a criatividade!
