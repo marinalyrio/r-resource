@@ -12,196 +12,335 @@
 # Matéria: INFERÊNCIA ESTATÍSTICA
 # --------------------------------------------------------------------------------------------------
 # ==================================================================================================
-# Leitura e inspeção do dataframe
-airlines <- tibble(read.csv2("./data/inf_esta/nyc_airlines.csv", sep = ",", stringsAsFactors = TRUE))
-airports <- tibble(read.csv2("./data/inf_esta/nyc_airports.csv", sep = ",", stringsAsFactors = TRUE))
-flights  <- tibble(read.csv2("./data/inf_esta/nyc_flights.csv", sep = ",", stringsAsFactors = TRUE))
-planes   <- tibble(read.csv2("./data/inf_esta/nyc_planes.csv", sep = ",", stringsAsFactors = TRUE))
-weather  <- tibble(read.csv2("./data/inf_esta/nyc_weather.csv", sep = ",", stringsAsFactors = TRUE))
-
-View(airlines)
-View(airports)
-View(flights)
-View(planes)
-View(weather)
 
 
-# ::::INÍCIO - ISABELA:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# • Análises I: Apresente um panorama geral sobre a dinâmica dos voos de cada aeroporto no que se refere
-  # à quantidade voos. Identifique os momentos de maior demanda (horários, dias da semana e meses do ano).
-  # Como são os voos por empresa área? Duração e distâncias típicas de voos?
-
-View(airlines)
-
-View(airports)
-
-View(flights)
-
-View(planes)
-
-
-# Importar Bibliotecas --------------------------------------------------------------------------------#
-
-
-library(tidyverse)
+install.packages('dplyr')
+install.packages("tidyr")
+install.packages("stringr")
+install.packages("lubridate")
+install.packages("ggplot2")
+install.packages("Rmisc")
 
 library(dplyr)
-
 library(tidyr)
-
 library(stringr)
-
 library(lubridate)
+library(tidyverse)
+library(ggplot2)
+library(Rmisc)
+
+#_______________________________________________________________________________________________________________________________
+
+#1.1 Apresentação e descrição da Base de Dados
+
+#1.1. - Resumo e descrição bases de dados originais
+
+# Leitura e inspeção do dataframe
+path = 'D:/Rafael/OneDrive/MBA - Business Analytics Big Data/Inferência Estatística/'
+nyc_airlines = read.csv(str_c(path, 'Trabalho em Grupo/nyc_airlines.csv', sep = ''),
+                        sep = ',', stringsAsFactors = TRUE)
+nyc_airports = read.csv(str_c(path, 'Trabalho em Grupo/nyc_airports.csv', sep = ''),
+                        sep = ',', stringsAsFactors = TRUE)
+nyc_flights = read.csv(str_c(path, 'Trabalho em Grupo/nyc_flights.csv', sep = ''),
+                       sep = ',', stringsAsFactors = TRUE)
+nyc_planes = read.csv(str_c(path, 'Trabalho em Grupo/nyc_planes.csv', sep = ''),
+                      sep = ',', stringsAsFactors = TRUE)
+nyc_weather = read.csv(str_c(path, 'Trabalho em Grupo/nyc_weather.csv', sep = ''),
+                       sep = ',', stringsAsFactors = TRUE)
 
 
-# Análise Bases --------------------------------------------------------------------------------#
+str(nyc_airlines); summary(nyc_airlines)
+str(nyc_airports); summary(nyc_airports)
+str(nyc_flights); summary(nyc_flights)
+str(nyc_planes); summary(nyc_planes)
+str(nyc_weather); summary(nyc_weather)
+
+#1.2. Diagrama relacional e construção da base principal.
+
+#Criação de variável chave entre a base de dados nyc_flights e nyc_weather.
+
+nyc_flights$time_hour_key <- str_c(nyc_flights$year, nyc_flights$month,
+                                   nyc_flights$day, nyc_flights$hour,
+                                   nyc_flights$origin, sep = '-')
+
+nyc_weather$time_hour_key <- str_c(nyc_weather$year, nyc_weather$month,
+                                   nyc_weather$day, nyc_weather$hour,
+                                   nyc_weather$origin, sep = '-')
 
 
-summary(airlines)
+#Para realizar o join entre os dts flight e airports, substituir label da variável faa do dt nyc_airports para origin. 
+colnames(nyc_airports)[which(names(nyc_airports) == 'faa')] <- 'origin'
 
-summary(airports)
+#Iniciar leftjoins das bases. Left join escolhido para trazer as informações coincidentes com a base de dados principal, nyc_flights.
 
-summary(flights)
+nyc_fli_airl <- left_join(nyc_flights, nyc_airlines, by = 'carrier')
 
-summary(planes)
+nyc_fli_airl_airp <- left_join(nyc_fli_airl, nyc_airports, by = 'origin')
 
+nyc_fli_airl_aip_pl <- left_join(nyc_fli_airl_airp, nyc_planes, by = 'tailnum')
 
-str(airlines)
+nyc_complete <- left_join(nyc_fli_airl_aip_pl, nyc_weather, by = 'time_hour_key')
 
-str(airports)
+#analisar descrição e resumo dos dados
+str(nyc_complete); summary(nyc_complete)
 
-str(flights)
+#excluir colunas duplicadas 
+nyc_complete <- nyc_complete %>% select(-year, -month.y, -day.y, -hour.y, -origin.y, -time_hour.y)
 
-str(planes)
+#Outras alterações de labels para evitar duplicidade de nome de variável quando realizar o join.
 
+colnames(nyc_complete)[which(names(nyc_complete) == 'year.x')] <- 'year'
+colnames(nyc_complete)[which(names(nyc_complete) == 'month.x')] <- 'month'
+colnames(nyc_complete)[which(names(nyc_complete) == 'day.x')] <- 'day'
+colnames(nyc_complete)[which(names(nyc_complete) == 'hour.x')] <- 'hour'
+colnames(nyc_complete)[which(names(nyc_complete) == 'time_hour.x')] <- 'time_hour'
+colnames(nyc_complete)[which(names(nyc_complete) == 'name.x')] <- 'name_airl'
+colnames(nyc_complete)[which(names(nyc_complete) == 'name.y')] <- 'name_airp'
+colnames(nyc_complete)[which(names(nyc_complete) == 'year.y')] <- 'year_manuf'
+colnames(nyc_complete)[which(names(nyc_complete) == 'origin.x')] <- 'origin'
 
-# QUANTIDADES DE voos ANUAIS ----------------------------------------------------------------#
+#converter variável time_hour em data
+nyc_flights$time_hour <- ymd_hms(nyc_flights$time_hour)
 
+#criar variáveis month_label, wday e name_origin
+nyc_complete$month_label <- month(nyc_complete$time_hour, label = T, abbr = T, locale = 'English')
+nyc_complete$wday <- wday(nyc_complete$time_hour, label = T, abbr = T, locale = 'English')
+nyc_complete$name_origin = ifelse(nyc_complete$origin %in% 'EWR','Newark Liberty',
+                                  
+                                  ifelse(nyc_complete$origin %in% 'JFK','John F Kennedy','La Guardia'))
 
-str(flights$hour)
+#converter variável name_origin em fator.
+#nyc_complete$name_origin <- as.factor(nyc_complete$name_origin)
 
+#analisar descrição e resumo dos dados.
+str(nyc_complete); summary(nyc_complete)
 
-flights$name_origin = ifelse(flights$origin %in% 'EWR','Newark Liberty',
+#_______________________________________________________________________________________________________________________________
 
-                                ifelse(flights$origin %in% 'JFK','John F Kennedy','La Guardia'))
+#1.	Análise Exploratória da dinâmica de vôos 
 
+#1.1.	Panorama Geral Voos Aeroportos
 
-barplot(table(flights$name_origin),
-
+barplot(table(nyc_complete$name_origin),
+        
         main = 'Volume anual de voos por Aeroportos', cex.main = 1.4,
-
+        
         cex.names = 1.4,
-
+        
         xlab = "Aeroporto", 
-
+        
         ylab = "Frequência voos (#)", cex.axis = 1.4,
-
+        
         ylim = c(0,150000), col= 'dodgerblue', border= 'dodgerblue4')
 
 
-group_by(flights,name_origin) %>% summarise(count = n())
+group_by(nyc_complete,name_origin) %>% dplyr::summarise(count = n())
+
+#1.1.1 Newark Liberty Airport
 
 
-# TRATAMENTO DATA ----------------------------------------------------------------#
+flights_EWR <- nyc_complete %>% filter(name_origin %in% ('Newark Liberty'))
 
 
-flights$month <- month(flights$time_hour, label = T, abbr = T, locale = 'English')
-
-
-flights$weekday <- wday(flights$time_hour, label = T, abbr = T, locale = 'English')
-
-
-
-# ANÁLISE voos JFK ----------------------------------------------------------------#
-
-
-flights_JFK <- flights %>% filter(name_origin %in% ('John F Kennedy'))
-
-
-barplot(table(flights_JFK$month),
-
-        main = 'Volume Mensal de voos - John F Kennedy', cex.main = 1.4,
-
-        cex.names = 1.2,
-
-        xlab = "Meses", 
-
-        ylab = "Frequência voos (#)", cex.axis = 1.2,
-
-        ylim = c(0,11000), col= 'dodgerblue', border= 'dodgerblue4')   
-
-
-group_by(flights_JFK,month) %>% summarise(count = n())
-
-
-barplot(table(flights_JFK$day),
-
-        main = 'Volume voos por dia do mês - John F Kennedy', cex.main = 1.4,
-
+barplot(table(flights_EWR$month_label),        
+        main = 'Volume Mensal de voos - Newark Liberty', cex.main = 1.4,
+        
         cex.names = 0.9,
-
-        xlab = "Dia do Mês",
-
+        
+        xlab = "Meses", 
+        
         ylab = "Frequência voos (#)", cex.axis = 1.2,
-
-        ylim = c(0,4000), col= 'dodgerblue', border= 'dodgerblue4')    
-
-
-
-flights_JFK_day <- group_by(flights_JFK,day) %>% summarise(count = n())
+        
+        ylim = c(0,11000), col= 'dodgerblue', border= 'dodgerblue4')  
 
 
-volume_dia_JFK$count2 = ifelse(volume_dia_JFK$day ==31,volume_dia_JFK$count/7,
+group_by(flights_EWR,month_label) %>% dplyr::summarise(count = n())
 
-                               ifelse(volume_dia_JFK$day ==30,volume_dia_JFK$count/11,
+barplot(table(flights_EWR$day),
+        
+        main = 'Volume voos por dia do mês - Newark Liberty', cex.main = 1.4,
+        
+        cex.names = 0.9,
+        
+        xlab = "Dia do Mês", 
+        
+        ylab = "Frequência voos (#)", cex.axis = 1.2,
+        
+        ylim = c(0,4000), col= 'dodgerblue', border= 'dodgerblue4')  
 
-                                      ifelse(volume_dia_JFK$day ==29,volume_dia_JFK$count/11,
+flights_EWR_day <- group_by(flights_EWR,day) %>% summarise(count = n())
 
-                                             volume_dia_JFK$count/12)))
+flights_EWR_day$count2 = ifelse(flights_EWR_day$day ==31,flights_EWR_day$count/7,
+                                ifelse(flights_EWR_day$day ==30,flights_EWR_day$count/11, 
+                                       ifelse(flights_EWR_day$day ==29,flights_EWR_day$count/11,
+                                              flights_EWR_day$count/12)))
 
-  
 
-barplot(table(flights_JFK$weekday),
-
-        main = 'Volume voos por dia da semana - John F Kennedy', cex.main = 1.4,
-
-        cex.names = 1.2,
-
+barplot(table(flights_EWR$wday),      
+        main = 'Volume voos por dia da semana - Newark Liberty', cex.main = 1.4,
+        
+        cex.names = 0.9,
+        
         xlab = "Dia da Semana", 
-
+        
         ylab = "Frequência voos (#)", cex.axis = 1.2,
-
+        
         ylim = c(0,20000), col= 'dodgerblue', border= 'dodgerblue4') 
 
 
-group_by(flights_JFK,weekday) %>% summarise(count = n())
+group_by(flights_EWR,wday) %>% dplyr::summarise(count = n())
 
-
-barplot(table(flights_JFK$hour),
-
-        main = 'Volume voos por hora do dia - John F Kennedy', cex.main = 1.4,
-
+barplot(table(flights_EWR$hour),
+        
+        main = 'Volume voos por hora do dia - Newark Liberty', cex.main = 1.4,
+        
         cex.names = 0.9,
-
+        
         xlab = "Hora do dia", 
-
+        
         ylab = "Frequência voos (#)", cex.axis = 1.2,
-
+        
         ylim = c(0,15000), col= 'dodgerblue', border= 'dodgerblue4') 
 
 
-boxplot(hour ~ weekday, data = flights_JFK,
+IQR(flights_EWR$hour)
 
-        main = 'Voos por Hora/dia da semana - John F Kennedy', cex.main = 1.4,
+quantile(flights_EWR$hour,0.25)
 
-        xlab = 'Dia da Semana',
+quantile(flights_EWR$hour,0.75)
 
-        ylab = 'Hora do Dia', cex.axis = 1.2,
 
+par(mar = rep(2, 4))
+
+boxplot(flights_EWR$hour,
+        
+        main = 'Voos por hora - Newark Liberty', cex.main = 1.4,
+        
+        xlab = 'Dia da Semana', cex.axis = 1.2,
+        
         horizontal = F, cex.lab = 1.2,
-
+        
         ylim= c(0,24), col = 'dodgerblue', border= 'dodgerblue4' )
 
+
+boxplot(hour ~ wday, data = flights_EWR,
+        
+        main = 'voos por Hora/dia da semana - Newark Liberty', cex.main = 1.4,
+        
+        xlab = 'Dia da Semana',
+        
+        ylab = 'Hora do Dia', cex.axis = 1.0,
+        
+        horizontal = F, cex.lab = 1.2,
+        
+        ylim= c(0,24), col = 'dodgerblue', border= 'dodgerblue4' )
+
+
+flights_EWR_wknd <- flights_EWR %>% filter(wday %in% c("Sat","Sun"))
+
+IQR(flights_EWR_wknd$hour)
+
+quantile(flights_EWR_wknd$hour,0.25)
+
+quantile(flights_EWR_wknd$hour,0.75)
+
+min(flights_EWR_wknd$hour)
+
+
+flights_EWR_du <- flights_EWR %>% filter(wday %in% c("Mon","Tue","Wed","Thu","Fri"))
+
+IQR(flights_EWR_du$hour)
+
+quantile(flights_EWR_du$hour,0.25)
+
+quantile(flights_EWR_du$hour,0.75)
+
+min(flights_EWR_du$hour)
+
+max(flights_EWR_du$hour)
+
+
+#1.1.2. John F Kennedy Airport
+
+
+flights_JFK <- nyc_complete %>% filter(name_origin %in% ('John F Kennedy'))
+
+barplot(table(flights_JFK$month_label),
+        
+        main = 'Volume Mensal de voos - John F Kennedy', cex.main = 1.4,
+        
+        cex.names = 1.2,
+        
+        xlab = "Meses", 
+        
+        ylab = "Frequência voos (#)", cex.axis = 1.2,
+        
+        ylim = c(0,11000), col= 'dodgerblue', border= 'dodgerblue4')   
+
+group_by(flights_JFK,month_label) %>% dplyr::summarise(count = n())
+
+barplot(table(flights_JFK$day),
+        
+        main = 'Volume voos por dia do mês - John F Kennedy', cex.main = 1.4,
+        
+        cex.names = 0.9,
+        
+        xlab = "Dia do Mês",
+        
+        ylab = "Frequência voos (#)", cex.axis = 1.2,
+        
+        ylim = c(0,4000), col= 'dodgerblue', border= 'dodgerblue4')    
+
+
+flights_JFK_day <- group_by(flights_JFK,day) %>% dplyr::summarise(count = n())
+
+
+flights_JFK_day$count2 = ifelse(flights_JFK_day$day ==31,flights_JFK_day$count/7,
+                                
+                                ifelse(flights_JFK_day$day ==30,flights_JFK_day$count/11,
+                                       
+                                       ifelse(flights_JFK_day$day ==29,flights_JFK_day$count/11,
+                                              
+                                              flights_JFK_day$count/12)))
+
+
+barplot(table(flights_JFK$wday),
+        main = 'Volume voos por dia da semana - John F Kennedy', cex.main = 1.4,
+        
+        cex.names = 1.2,
+        
+        xlab = "Dia da Semana", 
+        
+        ylab = "Frequência voos (#)", cex.axis = 1.2,
+        
+        ylim = c(0,20000), col= 'dodgerblue', border= 'dodgerblue4') 
+
+group_by(flights_JFK,wday) %>% dplyr::summarise(count = n())
+
+barplot(table(flights_JFK$hour),
+        
+        main = 'Volume voos por hora do dia - John F Kennedy', cex.main = 1.4,
+        
+        cex.names = 0.9,
+        
+        xlab = "Hora do dia", 
+        
+        ylab = "Frequência voos (#)", cex.axis = 1.2,
+        
+        ylim = c(0,15000), col= 'dodgerblue', border= 'dodgerblue4') 
+
+
+boxplot(hour ~ wday, data = flights_JFK,
+        
+        main = 'Voos por Hora/dia da semana - John F Kennedy', cex.main = 1.4,
+        
+        xlab = 'Dia da Semana',
+        
+        ylab = 'Hora do Dia', cex.axis = 1.2,
+        
+        horizontal = F, cex.lab = 1.2,
+        
+        ylim= c(0,24), col = 'dodgerblue', border= 'dodgerblue4' )
 
 
 IQR(flights_JFK$hour)
@@ -216,96 +355,88 @@ median(flights_JFK$hour)
 
 
 
-# LA GUARDIA ----------------------------------------------------------------#
+#1.1.3 La Guardia Airport
 
 
-flights_LGA <- flights %>% filter(name_origin %in% ('La Guardia'))
+flights_LGA <- nyc_complete %>% filter(name_origin %in% ('La Guardia'))
 
-
-barplot(table(flights_LGA$month),
-
+barplot(table(flights_LGA$month_label),        
         main = 'Volume Mensal de voos - La Guardia', cex.main = 1.4,
-
+        
         cex.names = 0.9,
-
+        
         xlab = "Meses", 
-
+        
         ylab = "Frequência voos (#)", cex.axis = 1.2,
-
+        
         ylim = c(0,11000), col= 'dodgerblue', border= 'dodgerblue4')   
 
 
-group_by(flights_LGA,month) %>% summarise(count = n())
-
+group_by(flights_LGA,month_label) %>% dplyr::summarise(count = n())
 
 barplot(table(flights_LGA$day),
-
+        
         main = 'Volume voos por dia do mês - La Guardia', cex.main = 1.4,
-
+        
         cex.names = 0.9,
-
+        
         xlab = "Dia do Mês", 
-
+        
         ylab = "Frequência voos (#)", cex.axis = 1.2,
-
+        
         ylim = c(0,4000), col= 'dodgerblue', border= 'dodgerblue4')         
 
 
-flights_LGA_day <- group_by(flights_LGA,day) %>% summarise(count = n())
+flights_LGA_day <- group_by(flights_LGA,day) %>% dplyr::summarise(count = n())
 
 
-volume_dia_LGA$count2 = ifelse(volume_dia_LGA$day ==31,volume_dia_LGA$count/7,
+flights_LGA_day$count2 = ifelse(flights_LGA_day$day ==31,flights_LGA_day$count/7,
+                                
+                                ifelse(flights_LGA_day$day ==30,flights_LGA_day$count/11,
+                                       
+                                       ifelse(flights_LGA_day$day ==29,flights_LGA_day$count/11,
+                                              
+                                              flights_LGA_day$count/12)))
 
-                               ifelse(volume_dia_LGA$day ==30,volume_dia_LGA$count/11,
-
-                                      ifelse(volume_dia_LGA$day ==29,volume_dia_LGA$count/11,
-
-                                             volume_dia_LGA$count/12)))
-
-
-barplot(table(flights_LGA$weekday),
-
+barplot(table(flights_LGA$wday),       
         main = 'Volume voos por dia da semana - La Guardia', cex.main = 1.4,
-
+        
         cex.names = 0.9,
-
+        
         xlab = "Dia da Semana", 
-
+        
         ylab = "Frequência voos (#)", cex.axis = 1.2,
-
+        
         ylim = c(0,20000), col= 'dodgerblue', border= 'dodgerblue4') 
 
 
-group_by(flights_LGA,weekday) %>% summarise(count = n())
-
+group_by(flights_LGA,wday) %>% dplyr::summarise(count = n())
 
 barplot(table(flights_LGA$hour),
-
+        
         main = 'Volume voos por hora do dia - La Guardia', cex.main = 1.4,
-
+        
         cex.names = 0.9,
-
+        
         xlab = "Hora do dia", 
-
+        
         ylab = "Frequência voos (#)", cex.axis = 1.2,
-
+        
         ylim = c(0,15000), col= 'dodgerblue', border= 'dodgerblue4') 
 
-
-boxplot(hour ~ weekday, data = flights_LGA,
-
+boxplot(hour ~ wday, data = flights_LGA,       
         main = 'voos por Hora/dia da semana - La Guardia', cex.main = 1.4,
-
+        
         xlab = 'Dia da Semana',
-
+        
         ylab = 'Hora do Dia', cex.axis = 1.0,
-
+        
         horizontal = F, cex.lab = 1.2,
-
+        
         ylim= c(0,24), col = 'dodgerblue', border= 'dodgerblue4' )
 
 
-flights_LGA_wknd <- flights_LGA %>% filter(weekday %in% c("Sun"))
+flights_LGA_wknd <- flights_LGA %>% filter(wday %in% c("Sun"))
 
 IQR(flights_LGA_wknd$hour)
 
@@ -318,7 +449,7 @@ min(flights_LGA_wknd$hour)
 max(flights_LGA_wknd$hour)
 
 
-flights_LGA_du <- flights_LGA %>% filter(weekday %in% c("Mon","Tue","Wed","Thu","Fri","Sat"))
+flights_LGA_du <- flights_LGA %>% filter(wday %in% c("Mon","Tue","Wed","Thu","Fri","Sat"))
 
 IQR(flights_LGA_du$hour)
 
@@ -331,267 +462,105 @@ min(flights_LGA_du$hour)
 max(flights_LGA_du$hour)
 
 
+#1.2 Análise dos voos por companhia aérea
 
-# NEWARK LIBERTY ----------------------------------------------------------------#
 
-
-flights_EWR <- flights %>% filter(name_origin %in% ('Newark Liberty'))
-
-
-barplot(table(flights_EWR$month),
-
-        main = 'Volume Mensal de voos - Newark Liberty', cex.main = 1.4,
-
-        cex.names = 0.9,
-
-        xlab = "Meses", 
-
-        ylab = "Frequência voos (#)", cex.axis = 1.2,
-
-        ylim = c(0,11000), col= 'dodgerblue', border= 'dodgerblue4')  
-
-
-group_by(flights_EWR,month) %>% summarise(count = n())
-
-
-barplot(table(flights_EWR$day),
-
-        main = 'Volume voos por dia do mês - Newark Liberty', cex.main = 1.4,
-
-        cex.names = 0.9,
-
-        xlab = "Dia do Mês", 
-
-        ylab = "Frequência voos (#)", cex.axis = 1.2,
-
-        ylim = c(0,4000), col= 'dodgerblue', border= 'dodgerblue4')  
-
-
-volume_dia_EWR <- group_by(flights_EWR,day) %>% summarise(count = n())
-
-
-volume_dia_EWR$count2 = ifelse(volume_dia_EWR$day ==31,volume_dia_EWR$count/7,
-
-                               ifelse(volume_dia_EWR$day ==30,volume_dia_EWR$count/11,
-
-                                      ifelse(volume_dia_EWR$day ==29,volume_dia_EWR$count/11,
-
-                                             volume_dia_EWR$count/12)))
-
-
-barplot(table(volume_dia_EWR$day),
-
-        main = 'Volume voos por dia do mês - Newark Liberty', cex.main = 1.4,
-
-        cex.names = 0.9,
-
-        xlab = "Dia do Mês", 
-
-        ylab = "Frequência voos (#)", cex.axis = 1.2,
-
-        ylim = c(0,400), col= 'dodgerblue', border= 'dodgerblue4')  
-
-  
-
-  
-
-barplot(table(flights_EWR$weekday),
-
-        main = 'Volume voos por dia da semana - Newark Liberty', cex.main = 1.4,
-
-        cex.names = 0.9,
-
-        xlab = "Dia da Semana", 
-
-        ylab = "Frequência voos (#)", cex.axis = 1.2,
-
-        ylim = c(0,20000), col= 'dodgerblue', border= 'dodgerblue4') 
-
-
-group_by(flights_EWR,weekday) %>% summarise(count = n())
-
-
-barplot(table(flights_EWR$hour),
-
-        main = 'Volume voos por hora do dia - Newark Liberty', cex.main = 1.4,
-
-        cex.names = 0.9,
-
-        xlab = "Hora do dia", 
-
-        ylab = "Frequência voos (#)", cex.axis = 1.2,
-
-        ylim = c(0,15000), col= 'dodgerblue', border= 'dodgerblue4') 
-
-
-IQR(flights_EWR$hour)
-
-quantile(flights_EWR$hour,0.25)
-
-quantile(flights_EWR$hour,0.75)
-
-
-par(mar = rep(2, 4))
-
-boxplot(flights_EWR$hour,
-
-        main = 'Voos por hora - Newark Liberty', cex.main = 1.4,
-
-        xlab = 'Dia da Semana', cex.axis = 1.2,
-
-        horizontal = F, cex.lab = 1.2,
-
-        ylim= c(0,24), col = 'dodgerblue', border= 'dodgerblue4' )
-
-
-boxplot(hour ~ weekday, data = flights_EWR,
-
-        main = 'voos por Hora/dia da semana - Newark Liberty', cex.main = 1.4,
-
-        xlab = 'Dia da Semana',
-
-        ylab = 'Hora do Dia', cex.axis = 1.0,
-
-        horizontal = F, cex.lab = 1.2,
-
-        ylim= c(0,24), col = 'dodgerblue', border= 'dodgerblue4' )
-
-
-flights_EWR_wknd <- flights_EWR %>% filter(weekday %in% c("Sat","Sun"))
-
-IQR(flights_EWR_wknd$hour)
-
-quantile(flights_EWR_wknd$hour,0.25)
-
-quantile(flights_EWR_wknd$hour,0.75)
-
-min(flights_EWR_wknd$hour)
-
-
-flights_EWR_du <- flights_EWR %>% filter(weekday %in% c("Mon","Tue","Wed","Thu","Fri"))
-
-IQR(flights_EWR_du$hour)
-
-quantile(flights_EWR_du$hour,0.25)
-
-quantile(flights_EWR_du$hour,0.75)
-
-min(flights_EWR_du$hour)
-
-max(flights_EWR_du$hour)
-
-
-# COMPANHIAS AÉREAS ----------------------------------------------------------------#
-
-
-flights_airlines <- left_join(flights,airlines, by = "carrier")
-
-
-barplot(table(flights_airlines$name),
-
+barplot(table(nyc_complete$name_airl),        
         main = 'Volume anual de voos por Companhia Aérea', cex.main = 1.4,
-
+        
         cex.names = 0.66,
-
+        
         xlab = , 
-
+        
         ylab = , cex.axis = 1.0,
-
+        
         ylim = c(0,60000), col= 'dodgerblue', border= 'dodgerblue4',
-
+        
         las=2,angle=90)
 
 
 par(mar=c(9,4,2,2))
 
-
-boxplot(distance ~ name, data = flights_airlines,
-
+boxplot(distance ~ name_airl, data = nyc_complete,        
         main = 'Distância voos por Companhias Aéreas', cex.main = 1.3,
-
+        
         xlab = '',
-
+        
         ylab = 'Distância (milhas)', cex.axis = 0.7,
-
+        
         horizontal = F, cex.lab = 1.0,
-
+        
         ylim= c(0,5400), col = 'dodgerblue', border= 'dodgerblue4',
-
+        
         las=2,angle=90)
 
 
-group_by(flights_airlines,name) %>% summarise(count = n(),
-
-                                   mean = mean(distance, na.rm = TRUE),
-
-                                   sd = sd(distance, na.rm = TRUE),
-
-                                   var = var(distance, na.rm = TRUE),
-
-                                   min = min(distance, na.rm = TRUE),
-
-                                   max = max(distance, na.rm = TRUE))
-
-
-ggplot(data = flights_airlines) + 
-
-  geom_point(mapping = aes(x = distance, y = air_time, color = name))
+group_by(nyc_complete,name_airl) %>% dplyr::summarise(count = n(),                                              
+                                               mean = mean(distance, na.rm = TRUE),
+                                               
+                                               sd = sd(distance, na.rm = TRUE),
+                                               
+                                               var = var(distance, na.rm = TRUE),
+                                               
+                                               min = min(distance, na.rm = TRUE),
+                                               
+                                               max = max(distance, na.rm = TRUE))
 
 
+ggplot(data = nyc_complete) + 
+  geom_point(mapping = aes(x = distance, y = air_time, color = name_airl))
 
-boxplot(air_time ~ name, data = flights_airlines,
-
+boxplot(air_time ~ name_airl, data = nyc_complete,        
         main = 'Duração voos por Companhias Aéreas', cex.main = 1.3,
-
+        
         xlab = '',
-
+        
         ylab = 'Duração (minutos)', cex.axis = 0.7,
-
+        
         horizontal = F, cex.lab = 1.0,
-
+        
         ylim= c(0,800), col = 'dodgerblue', border= 'dodgerblue4',
-
+        
         las=2,angle=90)
 
 
-group_by(flights_airlines,name) %>% summarise(count = n(),
+group_by(nyc_complete,name_airl) %>% dplyr::summarise(count = n(),
+                                               
+                                               mean = mean(air_time, na.rm = TRUE),
+                                               
+                                               sd = sd(air_time, na.rm = TRUE),
+                                               
+                                               var = var(air_time, na.rm = TRUE),
+                                               
+                                               min = min(air_time, na.rm = TRUE),
+                                               
+                                               max = max(air_time, na.rm = TRUE))
 
-                                    mean = mean(air_time, na.rm = TRUE),
+#_______________________________________________________________________________________________________________________________
 
-                                    sd = sd(air_time, na.rm = TRUE),
-
-                                    var = var(air_time, na.rm = TRUE),
-
-                                    min = min(air_time, na.rm = TRUE),
-
-                                    max = max(air_time, na.rm = TRUE))
+#2.Análise dos Atrasos em vôos
 
 
-# ====FIM - ISABELA=================================================================================
+#Tratamentos pré-análise 
 
-# :::CAIO:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# • Análises II: Defina o conceito de atraso de partida e analise a quantidade e % de voos com atraso por
-  # tempo e por cia área. Quais são os períodos que apresentam um % maior de voos com atraso? Quais são as top
-  # 3 cia em termos de atraso? Qual é o aeroporto melhor e pior em termos de pontualidade?
-
-# 1.Tratamentos pré-análise 
-
-#join flights & weather e tratamentos
-flights_weather <- left_join(nyc_flights, nyc_weather)
 
 #criação variável atrasos e transformação para factor
-flights_weather$atrasos = ifelse(flights_weather$dep_delay >= 60, "atrasado", 'pontual')
-flights_weather <- flights_weather %>% transform(atrasos = as.factor(atrasos))
+
+nyc_complete$atrasos = ifelse(nyc_complete$dep_delay >= 60, "atrasado", 'pontual')
+nyc_complete <- nyc_complete %>% transform(atrasos = as.factor(atrasos))
 
 #eliminação de NAs
-flights_weather2 <- flights_weather %>% filter(atrasos == 'atrasado' | atrasos == 'pontual')
+flights_atr_pont <- nyc_complete %>% filter(atrasos == 'atrasado' | atrasos == 'pontual')
 
-#2. analises atrasos
+#filtro no dataset mantendo apenas os vôos atrasados
+flights_atr <- nyc_complete %>% filter(atrasos == 'atrasado')
+
 
 #2.1 Por tempo
 
 #2.1.1 quantidade de voos
-ggplot(data = flights_weather4, aes(x = dep_delay)) + 
+
+ggplot(data = flights_atr, aes(x = dep_delay)) +  
   geom_histogram(binwidth = 30,color = 'dodgerblue4', fill = 'dodgerblue1') +
   xlab("Tempo de atraso (minutos)") +
   ylab("Voos") +
@@ -600,7 +569,8 @@ ggplot(data = flights_weather4, aes(x = dep_delay)) +
 
 #2.1.2 Percentual de vôos
 
-ggplot(data = flights_weather4, aes(x = dep_delay)) + 
+
+ggplot(data = flights_atr, aes(x = dep_delay)) + 
   geom_boxplot(fill = 'dodgerblue1') +
   xlab("Tempo de atraso") +
   ylab("Voos") +
@@ -610,30 +580,27 @@ ggplot(data = flights_weather4, aes(x = dep_delay)) +
 
 
 
-#1.2 Por cia aérea
+#2.2 Atrasos por cia aérea
 
-flights_weather3 <- left_join(flights_weather3, airlines, by = 'carrier')
+#flights_weather3 <- left_join(flights_weather3, airlines, by = 'carrier')
 #join com a base de airines para obter os nomes das cias aéreas
 
-#1.2.1 quantidade
+#Quantidade
 
-
-flights_weather4 <- flights_weather3 %>% filter(atrasos == 'atrasado')
-#filtro no dataset mantendo apenas os vôos atrasados
-
-
-ggplot(data = flights_weather4) + 
-  geom_bar(mapping = aes(x = name),color = 'dodgerblue4', fill = 'dodgerblue1', position = "dodge") +
+ggplot(data = flights_atr) +  
+  geom_bar(mapping = aes(x = name_airl),color = 'dodgerblue4', fill = 'dodgerblue1', position = "dodge") +
   xlab("Cia Aérea") +
   ylab("Atrasos") +
   ggtitle("Quantidade de atrasos por Cia Aérea") +
   theme(axis.text.x = element_text(angle = 90, size = 12))
 
 
-#1.1.2 percentual
+#Percentual
 
-ggplot(data = flights_weather3) + 
-  geom_bar(mapping = aes(x = name, fill = atrasos), color = 'dodgerblue4', position = "fill") +
+#ggplot(data = flights_weather3) + 
+#geom_bar(mapping = aes(x = name, fill = atrasos), color = 'dodgerblue4', position = "fill") +
+ggplot(data = flights_atr_pont) +  
+  geom_bar(mapping = aes(x = name_airl, fill = atrasos), color = 'dodgerblue4', position = "fill") +
   xlab("Cia Aérea") +
   ylab("Atrasos") +
   ggtitle("Percentual de voos atrasados por Cia Aérea") +
@@ -641,35 +608,27 @@ ggplot(data = flights_weather3) +
   scale_fill_manual(values = c('atrasado' = 'orange', 'pontual' = 'dodgerblue1'))+
   theme(axis.text.x = element_text(angle = 90, size = 12))
 
+#2.3 Atrasos por período
+
+#2.3.1 Por mês
+
+#variável month_label ordenada corretamente. 
+levels(flights_atr_pont$month_label)
 
 
-#3 periodos
+#Por quantidade
 
-#3.1 Mes
-
-flights_weather3 <- flights_weather2 %>% transform(month = as.factor(month))
-# Modificando a variável mês para fator
-summary(flights_weather3)
-
-
-levels(flights_weather3$month)
-levels(flights_weather3$month) <- c("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec")
-levels(flights_weather3$month)
-#renomeando os fatores mês
-
-#3.1.1 Por quantidade
-
-ggplot(data = flights_weather4) + 
-  geom_bar(mapping = aes(x = month),color = 'dodgerblue4', fill = 'dodgerblue1', position = "dodge") +
+ggplot(data = flights_atr) + 
+  geom_bar(mapping = aes(x = month_label),color = 'dodgerblue4', fill = 'dodgerblue1', position = "dodge") +  
   xlab("Mês") +
   ylab("Atrasos") +
   ggtitle("Quantidade de atrasos por Mês") +
   theme(axis.text.x = element_text(angle = 90, size = 12))
 
-#3.1.2 Percentual
+#Percentual
 
-ggplot(data = flights_weather3) + 
-  geom_bar(mapping = aes(x = month, fill = atrasos), color = 'dodgerblue4', position = "fill") +
+ggplot(data = flights_atr_pont) + 
+  geom_bar(mapping = aes(x = month_label, fill = atrasos), color = 'dodgerblue4', position = "fill") + 
   xlab("Mês") +
   ylab("Atrasos") +
   ggtitle("Percentual de voos atrasados por Mês") +
@@ -677,22 +636,21 @@ ggplot(data = flights_weather3) +
   scale_fill_manual(values = c('atrasado' = 'orange', 'pontual' = 'dodgerblue1'))+
   theme(axis.text.x = element_text(angle = 90, size = 12))
 
-#3.2 Dia do mes
+#2.3.2 Dia do mes
 
-#3.2.1 Por quantidade
+#Por quantidade
 
-ggplot(data = flights_weather4) + 
+ggplot(data = flights_atr) + 
   geom_bar(mapping = aes(x = factor(day)),color = 'dodgerblue4', fill = 'dodgerblue1', position = "dodge") +
   xlab("Dia") +
   ylab("Atrasos") +
   ggtitle("Quantidade de voos atrasados por dia do mês") +
   theme(axis.text.x = element_text(angle = 90, size = 12))
 
+#Percentual
 
-
-#3.2.2 Percentual
-
-ggplot(data = flights_weather3) + 
+#ggplot(data = flights_weather3) + 
+ggplot(data = flights_atr_pont) + 
   geom_bar(mapping = aes(x = factor(day), fill = atrasos), color = 'dodgerblue4', position = "fill") +
   xlab("Dia") +
   ylab("Atrasos") +
@@ -701,33 +659,21 @@ ggplot(data = flights_weather3) +
   scale_fill_manual(values = c('atrasado' = 'orange', 'pontual' = 'dodgerblue1'))+
   theme(axis.text.x = element_text(angle = 90, size = 12))
 
-#3.3 Dia da semana
+#2.3.3 Dia da semana
 
 
-#3.3.1 Por quantidade
+#Por quantidade
 
-#criação de variável dias da semana para dataset de voos atrasados
-flights_weather6 <- flights_weather4
-flights_weather6$wday <- wday(flights_weather6$time_hour, label = TRUE, locale = 'English')
-levels(flights_weather5$wday)
-
-ggplot(data = flights_weather6) + 
+ggplot(data = flights_atr) +  
   geom_bar(mapping = aes(x = wday),color = 'dodgerblue4', fill = 'dodgerblue1', position = "dodge") +
   xlab("Dia") +
   ylab("Atrasos") +
   ggtitle("Quantidade de voos atrasados por dia da semana") +
   theme(axis.text.x = element_text(angle = 90, size = 10))
 
+#Percentual
 
-
-#3.3.2 Percentual
-
-#criação de variável dias da semana para dataset de todos os vôos
-flights_weather5 <- flights_weather3
-flights_weather5$wday <- wday(flights_weather3$time_hour, label = TRUE, locale = 'English')
-levels(flights_weather5$wday)
-
-ggplot(data = flights_weather5) + 
+ggplot(data = flights_atr_pont) + 
   geom_bar(mapping = aes(x = wday, fill = atrasos), color = 'dodgerblue4', position = "fill") +
   xlab("Dia") +
   ylab("Atrasos") +
@@ -737,20 +683,21 @@ ggplot(data = flights_weather5) +
   theme(axis.text.x = element_text(angle = 90, size = 12))
 
 
-#4 Aeroportos
+#2.4 Aeroportos
 
-#4.1 Por quantidade
+#Por quantidade
 
-ggplot(data = flights_weather6) + 
+ggplot(data = flights_atr) +
   geom_bar(mapping = aes(x = origin),color = 'dodgerblue4', fill = 'dodgerblue1', position = "dodge") +
   xlab("Aeroporto") +
   ylab("Atrasos") +
   ggtitle("Quantidade de voos atrasados por aeroporto") +
   theme(axis.text.x = element_text(size = 10))
 
-#4.2 Percentual
+#Percentual
 
-ggplot(data = flights_weather5) + 
+#ggplot(data = flights_weather5) + 
+ggplot(data = flights_atr_pont) + 
   geom_bar(mapping = aes(x = origin, fill = atrasos), color = 'dodgerblue4', position = "fill") +
   xlab("Aeroporto") +
   ylab("Atrasos") +
@@ -759,64 +706,15 @@ ggplot(data = flights_weather5) +
   scale_fill_manual(values = c('atrasado' = 'orange', 'pontual' = 'dodgerblue1'))+
   theme(axis.text.x = element_text(size = 12))
 
+#_______________________________________________________________________________________________________________________________
 
+#3. Panorama geral dos voos realizados para as top 5 cia aéreas
 
-
-# ====FIM - CAIO====================================================================================
-
-# ::: AMAURI   ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# • Análises III: Para as top 5 cia aéreas em termos de número de voos faça uma análise do panorama de voos
-  # no que se refere distâncias e durações típicas, caracterização, tipo e idade da frota.
-
-
-# Para as top 5 CIA aéreas em termos de ***número de voos*** faça uma
-# Análise do panorama de voos
-# Distâncias e durações típicas,
-# Caracterização
-# Tipo e idade da frota.
-
-# início--------------------------------------------------------------------------------------------
-# Fonte: http://www.cookbook-r.com/Graphs/Multiple_graphs_on_one_page_(ggplot2)/
-# Plotar multiplos graficos
-multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
-  require(grid)
-
-  # Make a list from the ... arguments and plotlist
-  plots <- c(list(...), plotlist)
-
-  numPlots = length(plots)
-
-  # If layout is NULL, then use 'cols' to determine layout
-  if (is.null(layout)) {
-    # Make the panel
-    # ncol: Number of columns of plots
-    # nrow: Number of rows needed, calculated from # of cols
-    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
-                     ncol = cols, nrow = ceiling(numPlots/cols))
-  }
-
-  if (numPlots==1) {
-    print(plots[[1]])
-
-  } else {
-    # Set up the page
-    grid.newpage()
-    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
-
-    # Make each plot, in the correct location
-    for (i in 1:numPlots) {
-      # Get the i,j matrix positions of the regions that contain this subplot
-      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
-
-      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
-                                      layout.pos.col = matchidx$col))
-    }
-  }
-}
-# Fim-----------------------------------------------------------------------------------------------
+#3.1 Análise do panorama de voos.
 
 # Obtendo o nome e afrequência de voos das Top 5 CIA AÉREA :::::::::::::::::::::::::::::::::::::::::
-flight_per_airline <- table(flights$carrier)
+
+flight_per_airline <- table(nyc_complete$carrier)
 flight_per_airline <- sort(flight_per_airline, decreasing = TRUE)
 
 View(flight_per_airline)
@@ -828,46 +726,42 @@ top_5_airlines <- rename(top_5_airlines, carrier=Var1, total_flight=Freq)
 View(top_5_airlines)
 
 # Novo dataframe contendo apenas os dados das top 5 CIA aéreas
-t5_airline <- filter(flights, carrier %in% c('UA', 'B6', 'EV', 'DL', 'AA'))
-View(t5_airline)
 
+t5_airline <- filter(nyc_complete, carrier %in% c('UA', 'B6', 'EV', 'DL', 'AA'))
+View(t5_airline)
 
 # Análise do panorama de voos por CIA ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # United Air Lines Inc.-----------------------------------------------------------------------------
-UA <- filter(flights, carrier == 'UA')
+
+UA <- filter(t5_airline, carrier == 'UA')
 View(UA)
 
-# O aeroporto EWR é massivamente o aeroporto de origem mais utilizado pela cia UA (United Air Lines Inc.)
 UAA <- ggplot(UA, aes(x = origin))+
   geom_bar(fill = 'dodgerblue')+
   xlab('Origin departure - United Air Lines ')
 
-
-B6 <- filter(flights, carrier == 'B6')
+B6 <- filter(t5_airline, carrier == 'B6')
 View(B6)
 
 BB6 <- ggplot(B6, aes(x = origin))+
   geom_bar(fill = 'dodgerblue')+
   xlab('Origin departure - JetBlue Airways')
 
-
-EV <- filter(flights, carrier == 'EV')
+EV <- filter(t5_airline, carrier == 'EV')
 View(EV)
 
 EVV <- ggplot(EV, aes(x = origin))+
   geom_bar(fill = 'dodgerblue')+
   xlab('Origin departure - ExpressJet Airlines')
 
-
-DL <- filter(flights, carrier == 'DL')
+DL <- filter(t5_airline, carrier == 'DL')
 View(DL)
 
 DLL <- ggplot(DL, aes(x = origin))+
   geom_bar(fill = 'dodgerblue')+
   xlab('Origin departure - Delta Air Lines')
 
-
-AA <- filter(flights, carrier == 'AA')
+AA <- filter(t5_airline, carrier == 'AA')
 View(AA)
 
 AAA <- ggplot(AA, aes(x = origin))+
@@ -875,16 +769,11 @@ AAA <- ggplot(AA, aes(x = origin))+
   xlab('Origin departure - American Airlines')
 
 
-
 multiplot(UAA, BB6, EVV, DLL, AAA, cols = 2)
 
 
+#3.2 Análise de distâncias
 
-
-
-
-
-# distâncias----------------------------------------------------------------------------------------
 ggplot(UA, aes(x = distance, dest, color = origin))+
   geom_point(aes(size = distance))+
   xlab('Distance in miles')+
@@ -908,9 +797,9 @@ ggplot(EV, aes(x = distance, dest, color = origin))+
 
 ggplot(DL, aes(x = distance, dest, color = origin))+
   geom_point(aes(size = distance))+
-    xlab('Distance in miles')+
-    ylab('Final destinantion')+
-    ggtitle('Delta Air Lines')
+  xlab('Distance in miles')+
+  ylab('Final destinantion')+
+  ggtitle('Delta Air Lines')
 
 
 ggplot(AA, aes(x = distance, dest, color = origin))+
@@ -920,10 +809,7 @@ ggplot(AA, aes(x = distance, dest, color = origin))+
   ggtitle('American Airlines')
 
 
-# durações típicas ---------------------------------------------------------------------------------
-UA$time_hour <- ymd_hms(UA$time_hour)
-typeof(UA$time_hour)
-View(UA)
+#3.3 durações típicas 
 
 ggplot(t5_airline, aes(x = distance, y= air_time, color = carrier))+
   geom_point()+
@@ -953,26 +839,24 @@ nrow(filter(canceled_flight_UA, origin == 'LGA'))
 # 207
 
 can_UA <- ggplot(canceled_flight_UA, aes(x = origin))+
-  geom_bar(fill = 'dodgerblue')+
+geom_bar(fill = 'dodgerblue')+
   xlab('Origin departure')+
   ylab('Canceled flights - United Air Lines')
-
-
 
 
 canceled_flight_B6 <- filter(B6,  is.na(dep_time))
 
 nrow(canceled_flight_B6)
-# 636
+# 466
 nrow(filter(canceled_flight_B6, origin == 'EWR'))
-# 99
+# 74
 nrow(filter(canceled_flight_B6, origin == 'JFK'))
-# 141
+# 315
 nrow(filter(canceled_flight_B6, origin == 'LGA'))
-# 396
+# 77
 
 can_B6 <- ggplot(canceled_flight_B6, aes(x = origin))+
-  geom_bar(fill = 'dodgerblue')+
+ geom_bar(fill = 'dodgerblue')+
   xlab('Origin departure')+
   ylab('Canceled flights - JetBlue Airways')
 
@@ -1032,9 +916,6 @@ can_AA <- ggplot(canceled_flight_AA, aes(x = origin))+
 multiplot(can_UA, can_B6, can_EV, can_DL, can_AA, cols = 2)
 
 
-
-
-
 # Voos com atraso maior ou igual a 1h----------------------------------------------------------------
 delay_flight <- filter(UA, dep_delay >= 60)
 View(delay_flight)
@@ -1043,7 +924,7 @@ nrow(delay_flight)
 # 3899
 
 # media de atraso por mês---------------------------------------------------------------------------
-nrow(filter(delay_flight, month == 1))
+(filter(delay_flight, month == 1))
 nrow(filter(delay_flight, month == 2))
 nrow(filter(delay_flight, month == 3))
 nrow(filter(delay_flight, month == 4))
@@ -1062,67 +943,62 @@ View(delay_flight)
 
 
 ggplot(delay_flight, aes(x = month , y = dep_delay))+
-    geom_boxplot(fill = 'dodgerblue')
+  geom_boxplot(fill = 'dodgerblue')
 
 
 ggplot(delay_flight, aes(x = month))+
   geom_bar()
 
 
+#3.4 Tipo e idade da frota. 
 
-# Tipo e idade da frota. ---------------------------------------------------------------------------
 
-UA_AIRPLANE <- inner_join(UA, planes, by = 'tailnum')
+UA_AIRPLANE <- select(UA, tailnum, year_manuf, type, manufacturer, model, engines, seats, speed, engine)
 View(UA_AIRPLANE)
 
-UA_AIRPLANE <- select(UA_AIRPLANE, tailnum, year.y, type, manufacturer, model, engines, seats, speed, engine)
-UA_AIRPLANE <- rename(UA_AIRPLANE, year = year.y)
-View(UA_AIRPLANE)
-
-UA1 <- ggplot(UA_AIRPLANE, aes(x = manufacturer, y =year))+
-  geom_boxplot(col = 'dodgerblue', border= 'dodgerblue4')
+UA1 <- ggplot(UA_AIRPLANE, aes(x = manufacturer, y = year_manuf))+
+  geom_boxplot(col = 'dodgerblue', border = 'dodgerblue4')
 
 
 # Airbus Industrie (1970–2001)
 # fonte: https://en.wikipedia.org/wiki/Airbus
 
 # A frota utilizada pela United Air Lines  é predominantemente da Boeing
-ggplot(UA_AIRPLANE, aes(x = model, y =year, color = manufacturer))+
+
+ggplot(UA_AIRPLANE, aes(x = model, y =year_manuf, color = manufacturer))+
   geom_point(size = 4) +
   xlab('Air plane model')+
   ylab(' Year facture')
 
 
-ggplot(UA_AIRPLANE, aes(x = model, y =year, color = manufacturer, label = seats))+
+ggplot(UA_AIRPLANE, aes(x = model, y =year_manuf, color = manufacturer, label = seats))+
   geom_text()+
   xlab('Air plane model')+
   ylab(' Year facture')
 
-multiplot(UA1, UA2, cols = 2)
+
 
 # --------------------------------------------------------------------------------------------------
 
-B6_AIRPLANE <- inner_join(B6, planes, by = 'tailnum')
+
+B6_AIRPLANE <- select(B6, tailnum, year_manuf, type, manufacturer, model, engines, seats, speed, engine)
 View(B6_AIRPLANE)
 
-B6_AIRPLANE <- select(B6_AIRPLANE, tailnum, year.y, type, manufacturer, model, engines, seats, speed, engine)
-B6_AIRPLANE <- rename(B6_AIRPLANE, year = year.y)
-View(B6_AIRPLANE)
 
-ggplot(B6_AIRPLANE, aes(x = manufacturer, y =year))+
+ggplot(B6_AIRPLANE, aes(x = manufacturer, y =year_manuf))+
   geom_boxplot(col = 'dodgerblue', border= 'dodgerblue4')
 
 # Airbus Industrie (1970–2001)
 # fonte: https://en.wikipedia.org/wiki/Airbus
 
-# A frota utilizada pela United Air Lines  é predominantemente da Boeing
-ggplot(B6_AIRPLANE, aes(x = model, y =year, color = manufacturer))+
+
+ggplot(B6_AIRPLANE, aes(x = model, y =year_manuf, color = manufacturer))+
   geom_point(size = 4) +
   xlab('Air plane model')+
   ylab(' Year facture')
 
 
-ggplot(B6_AIRPLANE, aes(x = model, y =year, color = manufacturer, label = seats))+
+ggplot(B6_AIRPLANE, aes(x = model, y =year_manuf, color = manufacturer, label = seats))+
   geom_text()+
   xlab('Air plane model')+
   ylab(' Year facture')
@@ -1130,27 +1006,25 @@ ggplot(B6_AIRPLANE, aes(x = model, y =year, color = manufacturer, label = seats)
 
 # --------------------------------------------------------------------------------------------------
 
-EV_AIRPLANE <- inner_join(EV, planes, by = 'tailnum')
+
+EV_AIRPLANE <- select(EV, tailnum, year_manuf, type, manufacturer, model, engines, seats, speed, engine)
 View(EV_AIRPLANE)
 
-EV_AIRPLANE <- select(EV_AIRPLANE, tailnum, year.y, type, manufacturer, model, engines, seats, speed, engine)
-EV_AIRPLANE <- rename(EV_AIRPLANE, year = year.y)
-View(EV_AIRPLANE)
 
-ggplot(EV_AIRPLANE, aes(x = manufacturer, y =year))+
+ggplot(EV_AIRPLANE, aes(x = manufacturer, y =year_manuf))+
   geom_boxplot(col = 'dodgerblue', border= 'dodgerblue4')
 
 # Airbus Industrie (1970–2001)
 # fonte: https://en.wikipedia.org/wiki/Airbus
 
-# A frota utilizada pela United Air Lines  é predominantemente da Boeing
-ggplot(EV_AIRPLANE, aes(x = model, y =year, color = manufacturer))+
+
+ggplot(EV_AIRPLANE, aes(x = model, y =year_manuf, color = manufacturer))+
   geom_point(size = 4) +
   xlab('Air plane model')+
   ylab(' Year facture')
 
 
-ggplot(EV_AIRPLANE, aes(x = model, y =year, color = manufacturer, label = seats))+
+ggplot(EV_AIRPLANE, aes(x = model, y =year_manuf, color = manufacturer, label = seats))+
   geom_text()+
   xlab('Air plane model')+
   ylab(' Year facture')
@@ -1158,27 +1032,24 @@ ggplot(EV_AIRPLANE, aes(x = model, y =year, color = manufacturer, label = seats)
 
 # --------------------------------------------------------------------------------------------------
 
-DL_AIRPLANE <- inner_join(DL, planes, by = 'tailnum')
+
+DL_AIRPLANE <- select(DL, tailnum, year_manuf, type, manufacturer, model, engines, seats, speed, engine)
 View(DL_AIRPLANE)
 
-DL_AIRPLANE <- select(DL_AIRPLANE, tailnum, year.y, type, manufacturer, model, engines, seats, speed, engine)
-DL_AIRPLANE <- rename(DL_AIRPLANE, year = year.y)
-View(DL_AIRPLANE)
 
-ggplot(DL_AIRPLANE, aes(x = manufacturer, y =year))+
+ggplot(DL_AIRPLANE, aes(x = manufacturer, y =year_manuf))+
   geom_boxplot(col = 'dodgerblue', border= 'dodgerblue4')
 
 # Airbus Industrie (1970–2001)
 # fonte: https://en.wikipedia.org/wiki/Airbus
 
-# A frota utilizada pela United Air Lines  é predominantemente da Boeing
-ggplot(DL_AIRPLANE, aes(x = model, y =year, color = manufacturer))+
+ggplot(DL_AIRPLANE, aes(x = model, y =year_manuf, color = manufacturer))+
   geom_point(size = 4) +
   xlab('Air plane model')+
   ylab(' Year facture')
 
 
-ggplot(DL_AIRPLANE, aes(x = model, y =year, color = manufacturer, label = seats))+
+ggplot(DL_AIRPLANE, aes(x = model, y =year_manuf, color = manufacturer, label = seats))+
   geom_text()+
   xlab('Air plane model')+
   ylab(' Year facture')
@@ -1186,160 +1057,105 @@ ggplot(DL_AIRPLANE, aes(x = model, y =year, color = manufacturer, label = seats)
 
 # --------------------------------------------------------------------------------------------------
 
-AA_AIRPLANE <- inner_join(AA, planes, by = 'tailnum')
+
+AA_AIRPLANE <- select(AA, tailnum, year_manuf, type, manufacturer, model, engines, seats, speed, engine)
 View(AA_AIRPLANE)
 
-AA_AIRPLANE <- select(AA_AIRPLANE, tailnum, year.y, type, manufacturer, model, engines, seats, speed, engine)
-AA_AIRPLANE <- rename(AA_AIRPLANE, year = year.y)
-View(AA_AIRPLANE)
-
-ggplot(AA_AIRPLANE, aes(x = manufacturer, y =year))+
+ggplot(AA_AIRPLANE, aes(x = manufacturer, y =year_manuf))+
   geom_boxplot(col = 'dodgerblue', border= 'dodgerblue4')
 
 # Airbus Industrie (1970–2001)
 # fonte: https://en.wikipedia.org/wiki/Airbus
 
-# A frota utilizada pela United Air Lines  é predominantemente da Boeing
-ggplot(AA_AIRPLANE, aes(x = model, y =year, color = manufacturer))+
+ggplot(AA_AIRPLANE, aes(x = model, y =year_manuf, color = manufacturer))+
   geom_point(size = 4) +
   xlab('Air plane model')+
   ylab(' Year facture')
 
 
-ggplot(AA_AIRPLANE, aes(x = year, y =model, color = manufacturer, label = seats))+
+ggplot(AA_AIRPLANE, aes(x = year_manuf, y =model, color = manufacturer, label = seats))+
   geom_text()+
   xlab('Air plane model')+
   ylab(' Year facture')
 
+#_______________________________________________________________________________________________________________________________
 
+#4. Outras Análises
 
-# ====FIM - AMAURI====================================================================================
 
+summary(nyc_weather)
 
+# transformando a variável month em factor
+nyc_weather2 <- nyc_weather %>% transform(month = as.factor(month))
+str(nyc_weather2)
 
 
+# renomeando os fatores mês
+levels(nyc_weather2$month) <- c("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec")
+levels(nyc_weather2$month)
+View (nyc_weather2)
 
 
+nyc_weather2$precip <- as.numeric(nyc_weather2$precip)
+nyc_weather2$visib <- as.numeric(nyc_weather2$visib)
 
+#média global precipitação
+nyc_weather2 %>% dplyr::summarise(average_precip = mean(precip))
+nyc_weather2 %>% dplyr::summarise(average_precip = mean(visib))
 
+#4.1. Análise da Precipitação Média por mês
 
+nyc_weather2 %>% group_by(origin, month) %>% dplyr::summarise(average_precip_month = mean(precip), average_visib_month = mean(visib)) -> nyc_weather4
+View(nyc_weather4)
 
 
+# Gráficos Precipitação por aeroporto
 
-# :::MARCIA:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# • Análise IV: Análises gerais que vcs identificarem serem interessantes. Exercitem a criatividade!
-# Descrição dos dados/ tratamentos aplicados, análise 4 (aqui cada um também pode contribuir se tiver ideias),
-# esboço do documento
+nyc_weather4 %>% filter(origin == 'EWR') -> nyc_weather5
+View(nyc_weather5)
 
+ggplot(nyc_weather5, aes(month, average_precip_month, group = 1)) +  geom_line(color = 'dodgerblue', lwd = 1.1) +
+  labs(x="Mês",
+       y = "Precipitação Média ",
+       title = "Precipitação Média por Mês - Newark Liberty Airport")
 
 
+nyc_weather4 %>% filter(origin == 'JFK') -> nyc_weather6
+View(nyc_weather6)
 
+ggplot(nyc_weather6, aes(month, average_precip_month, group = 1)) +  geom_line(color = 'dodgerblue', lwd = 1.1) +
+  labs(x="Mês",
+       y = "Precipitação Média ",
+       title = "Precipitação Média por Mês - John F Kennedy Airport")
 
 
+nyc_weather4 %>% filter(origin == 'LGA') -> nyc_weather7
+View(nyc_weather7)
 
+ggplot(nyc_weather7, aes(month, average_precip_month, group = 1)) +  geom_line(color = 'dodgerblue', lwd = 1.1) +
+  labs(x="Mês",
+       y = "Precipitação Média ",
+       title = "Precipitação Média por Mês - La Guardia Airport")
 
 
+#4.2 Análise da Visibilitade Média por mês 
 
 
-# ====FIM - MARCIA==================================================================================
+ggplot(nyc_weather5, aes(month, average_visib_month, group = 1)) +  geom_line(color = 'dodgerblue', lwd = 1.1) +
+  labs(x="Mês",
+       y = "Visibilidade Média ",
+       title = "Visibilidade Média por Mês - Newark Liberty Airport")
 
-# :::RAFAEL:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# • Análise IV: Análises gerais que vcs identificarem serem interessantes. Exercitem a criatividade!
-# Descrição dos dados/ tratamentos aplicados, junção script R
+ggplot(nyc_weather6, aes(month, average_visib_month, group = 1)) +  geom_line(color = 'dodgerblue', lwd = 1.1) +
+  labs(x="Mês",
+       y = "Visibilidade Médi ",
+       title = "Visibilidade Média por Mês - John F Kennedy Airport")
 
-#analisar variáveis
 
-str(nyc_airlines); summary(nyc_airlines)
-str(nyc_airports); summary(nyc_airports)
-str(nyc_flights); summary(nyc_flights)
-str(nyc_planes); summary(nyc_planes)
-str(nyc_weather); summary(nyc_weather)
+#ggplot(nyc_weather7, aes(month, average_precip_month, group = 1)) +  geom_line(color = 'dodgerblue', lwd = 1.1) +
+ggplot(nyc_weather7, aes(month, average_visib_month, group = 1)) +  geom_line(color = 'dodgerblue', lwd = 1.1) +
+  labs(x="Mês",
+       y = "Visibilidade Média ",
+       title = "Visibilidade Média por Mês - La Guardia Airport")
 
-
-#transformar variáveis do dt flights para factor
-
-nyc_flights$flight <- as.factor(nyc_flights$flight)
-
-#converter variável time_hour de factor para data.
-
-nyc_flights$time_hour <- ymd_hms(nyc_flights$time_hour)
-
-#criar variáveis factor mês e dia da semana e estações do ano para ampliar possibilidade de análises.
-
-nyc_flights$month_label <- month(nyc_flights$time_hour, label = TRUE)
-nyc_flights$wday <- wday(nyc_flights$time_hour, label = TRUE, locale = 'English')
-nyc_flights$seasons = ifelse(nyc_flights$month_label %in% c('jun', 'jul', 'aug'),'Summer',
-                              ifelse(nyc_flights$month_label %in% c('sep','oct','nov'),'Autumn',
-                                     ifelse(nyc_flights$month_label %in% c('dec','jan','feb'),'Winter','Spring')))
-
-
-#criar variável date
-nyc_flights$date <- str_c(nyc_flights$year, nyc_flights$month,
-                                   nyc_flights$day, sep = '/')
-
-# Criar variável com a categorização dos principais feriados/datas importantes americanos. Critério. Dia do feriado +/- dois dias.
-# Ano novo por limitação da base, será considerado 30/12 e 31/12.
-
-#Super Bowl: 01/03/2013, 02/03/2013, 03/03/2013, 04/03/2013, 05/03/2013
-#Independence Day: 02/07/2013, 03/07/2013, 04/07/2013, 05/07/2013, 06/07/2013
-#Labor Day: 31/08/2013, 01/09/2013, 02/09/2013, 03/09/2013, 04/09/2013
-#Thanksgiving: 26/11/2013, 27/11/2013, 28/11/2013, 29/11/2013, 30/09/2013
-#Christmas: 23/12/2013, 24/12/2013, 25/12/2013, 26/12/2013, 27/12/2013
-#New Year's Day: 30/12/2013, 31/12/2013
-
-nyc_flights$holiday = ifelse(nyc_flights$date %in% c('2013/3/01', '2013/3/1', '2013/3/3', '2013/3/4', '2013/3/5'),'Superbowl',
-                              ifelse(nyc_flights$date %in% c('2013/7/2', '2013/7/3', '2013/7/4', '2013/7/5', '2013/7/6'),'Independence Day',
-                                     ifelse(nyc_flights$date %in% c('2013/8/31', '2013/9/1', '2013/9/2', '2013/9/3', '2013/9/4'),'Labor Day',
-                                            ifelse(nyc_flights$date %in% c('2013/11/26', '2013/11/27', '2013/11/28', '2013/11/29', '2013/11/30'),'Thanksgivings',
-                                                   ifelse(nyc_flights$date %in% c('2013/12/23', '2013/12/24', '2013/12/25', '2013/12/26', '2013/12/27'),'Christmas',
-                                                          ifelse(nyc_flights$date %in% c('2013/12/30', '2013/12/31'),'New Years Day','Regular'))))))
-
-#transformar variável date em data.
-nyc_flights$date <- ymd(nyc_flights$date)
-
-#criar variável relativa ao atraso. Conceito adotado para categorizar o atraso: dep_delay >= 60 minutos
-
-nyc_flights$delay = ifelse(nyc_flights$dep_delay >= 60,'Delayed', 'Not Delayed')
-
-#criar variável chave ano + mês + dia + hora + origem nos dts flights e weather. Incluir separador para evitar duplicidade de observações quando realizar o join.
-
-nyc_flights$time_hour_key <- str_c(nyc_flights$year, nyc_flights$month,
-                                   nyc_flights$day, nyc_flights$hour,
-                                   nyc_flights$origin, sep = '-')
-
-nyc_weather$time_hour_key <- str_c(nyc_weather$year, nyc_weather$month,
-                                   nyc_weather$day, nyc_weather$hour,
-                                   nyc_weather$origin, sep = '-')
-
-#excluir colunas do dt weather para evitar duplicidade de colunas quando realizar o join
-
-nyc_weather <- nyc_weather %>% select(-year, -month, -day, -hour, -origin, -time_hour)
-
-#Para realizar o join entre os dts flight e airports, substituir label da variável faa do dt nyc_airports para origin. 
-colnames(nyc_airports)[which(names(nyc_airports) == 'faa')] <- 'origin'
-
-#alterar variável year do dt planes, relativo ao ano de fabricação da aeronave, para não confundir com o year, ano da observação da amostra.
-colnames(nyc_planes)[which(names(nyc_planes) == 'year')] <- 'year_manu'
-
-#Iniciar leftjoins das bases. Left join escolhido para trazer as informações coincidentes com o dt principal, nyc_flights
-
-nyc_fli_airl <- left_join(nyc_flights, nyc_airlines, by = 'carrier')
-
-nyc_fli_airl_airp <- left_join(nyc_fli_airl, nyc_airports, by = 'origin')
-
-nyc_fli_airl_aip_pl <- left_join(nyc_fli_airl_airp, nyc_planes, by = 'tailnum')
-
-nyc_complete <- left_join(nyc_fli_airl_aip_pl, nyc_weather, by = 'time_hour_key')
-
-
-
-# ====FIM - RAFAEL==================================================================================
-
-# ::: NOSSAS CONCLUSOES:::::::::::::::::::::
-# • Conclusões: que insights podem ser obtidos através dos dados
-
-
-
-
-
-
+#____________________________________________________________FIM___________________________________________________________________
