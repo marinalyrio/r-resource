@@ -31,7 +31,7 @@ library(Rmisc)
 
 #_______________________________________________________________________________________________________________________________
 
-#1.1 Apresentação e descrição da Base de Dados
+#1. Apresentação e descrição da Base de Dados
 
 #1.1. - Resumo e descrição bases de dados originais
 
