@@ -73,6 +73,46 @@ lines(validacao_ts, bty="l", col="red")
 
 
 ##########################################################################
+#Modelo de Tendência Linear - Caio
+##########################################################################
+
+#Estima o modelo de tendência linear
+modelo_tendencia_linear <- tslm(treinamento_ts ~ trend)
+
+#resumo do modelo
+summary(modelo_tendencia_linear)
+
+#Verificando resíduos
+
+#Plotando os resíduos
+plot(modelo_tendencia_linear$residuals, xlab="Tempo", ylab="Resíduos", ylim=c(-500, 500), bty="l")
+
+#calcula a autocorrelação dos resíduos
+Acf(modelo_tendencia_linear$residuals)
+
+#verifica os resíduos com teste de Ljung-Box
+checkresiduals(modelo_tendencia_linear, test="LB")
+
+#plot modelo com tendencia
+
+plot(treinamento_ts, xlab="Tempo", ylab="Passageiros", bty="l")
+lines(modelo_tendencia_linear$fitted.values, lwd=2)
+
+#projeta o modelo durante o período de validação
+modelo_tendencia_linear_proj <- forecast(modelo_tendencia_linear, h = tam_amostra_teste, level=0.95)
+
+#plota o grafico da serie temporal de treinamento e teste
+
+plot(modelo_tendencia_linear_proj, xlab="Tempo", ylab="Faturamento", xaxt="n" , bty="l", flty=2)
+lines(validacao_ts)
+lines(modelo_tendencia_linear_proj$fitted, lwd=2, col="blue")
+
+
+#Verifica a acuracia do modelo
+accuracy(modelo_tendencia_linear_proj, validacao_ts)
+
+
+##########################################################################
 #Modelo de Tendência Exponencial - Márcia
 ##########################################################################
   
