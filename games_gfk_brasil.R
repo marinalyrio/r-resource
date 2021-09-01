@@ -11,66 +11,73 @@
 # Matéria: ANALISE DE SERIES TEMPORAIS
 # --------------------------------------------------------------------------------------------------
 # ==================================================================================================
-
-
 ##########################################################################
 # Organização da Base de dados - Márcia
 ##########################################################################
+# --------------------------------------------------------------------------------------------------
+# ==================================================================================================
 
-#limpa variaveis da memoria
+# Limpa os dados da memória
 rm(list = ls())
 
-#carrega os pacotes
-install.packages("zoo")
-library(zoo)
-install.packages("forecast")
+# Para evitar notação cientifica (3,4E+28)
+options(scipen = 999)
+
+# :::Importação das libs
 library(forecast)
+library(lubridate)
+library(zoo)
+library(urca)
 
-#importa a base de dados
-Games_GFK_Brasil <- read.csv2("C:/Users/marcia.silva/Desktop/Aulas MBA/Analise de series temporais/Trabalho em Grupo/Games_GFK_Brasil.csv")
-View(Games_GFK_Brasil)
+# Importação do dataset
+games_df = read.csv("./data/games_gfk_brasil.csv", sep = ";")
 
-#evita número em format e
-options(scipen=999)
+# Analise e visualização dos dados
+str(games_df)
+summary(games_df)
+View(games_df)
 
-#coverte a serie no formato de serie temporal
-Games_GFK_Brasil_ts <- ts(Games_GFK_Brasil$Faturamento, start=c(2011,1), end=c(2020,5), frequency = 12)
-
-
-#Analise estatistica
-summary(Games_GFK_Brasil_ts)
-
+# Gera o objeto de serie temporal
+games_ts = ts(games_df$Faturamento, start = c(2011,1), end = c(2020,5), frequency = 12)
+summary(games_ts)
 
 #plotgráfico da série temporal
-plot(Games_GFK_Brasil_ts, xlab="Data", ylab="Faturamento", ylim=c(3850000, 98500000), type="l")
+plot(games_ts, xlab="Data", ylab="Faturamento", ylim=c(3850000, 98500000), type="l")
 
-------------------------
-  
-#separa as amostras em treinamento e teste
+# Amostra de teste (equivalente a 20% total do dataset 113)
+amostra_teste = 23
 
-#define o tamanho da amostra de teste
-tam_amostra_teste <- 23
+# Amostra de treinamento
+amostra_treinamento = length(games_ts) - amostra_teste
 
-#define o tamanho da amostra de treinamento
-tam_amostra_treinamento <- length(Games_GFK_Brasil_ts) - tam_amostra_teste
+# Criando a serie temporal de treinamento
+treinamento_ts =  window(games_ts, start = c(2011, 1), end = c(2011, amostra_treinamento))
 
-#cria a serie temporal de treinamento
-treinamento_ts <- window(Games_GFK_Brasil_ts, start=c(2011, 1), end=c(2011,tam_amostra_treinamento))
-
-#cria a serie temporal de teste
-validacao_ts <- window(Games_GFK_Brasil_ts, start=c(2011, tam_amostra_treinamento + 1), end=c(2011,tam_amostra_treinamento+tam_amostra_teste))
+# criando a serie temporal de teste
+validacao_ts = window(games_ts, start = c(2011, amostra_treinamento + 1), end=c(2011, amostra_treinamento + amostra_teste))
+# ESTRUTURA BASE - FIM :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 treinamento_ts
 validacao_ts
 
-
 #plota o grafico da serie temporal de treinamento e teste
 plot(treinamento_ts, xlab="Data", ylab="Faturamento", xaxt="n" , ylim=c(3850000, 98500000), xlim=c(2011,2021), bty="l")
-
 axis(1, at=seq(2011, 2021, 1), labels=format(seq(2011, 2021,1)))
-
 lines(validacao_ts, bty="l", col="red")
 
+# MODELO NAIVE - INICIO (AMAURI)::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# Caculo do modelo naive
+modelo_naive <- naive(treinamento_ts, level=0, h=amostra_teste)
+modelo_naive
+# Valida a acuracia do modelo naive
+accuracy(modelo_naive, validacao_ts)
+
+# Plot da serie temporal - Treinamento e teste
+plot(modelo_naive, xlab="Tempo", ylab="Faturamento", xaxt="n" , ylim=c(3850331, 98420518), xlim=c(2011, 2020), bty="l", flty=2)
+
+axis(1, at=seq(2011, 2020, 1), labels=format(seq(2011, 2020, 1)))
+lines(validacao_ts)
+# MODELO NAIVE - FIM :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 ##########################################################################
 #Modelo de Tendência Linear - Caio
@@ -99,7 +106,7 @@ plot(treinamento_ts, xlab="Tempo", ylab="Passageiros", bty="l")
 lines(modelo_tendencia_linear$fitted.values, lwd=2)
 
 #projeta o modelo durante o período de validação
-modelo_tendencia_linear_proj <- forecast(modelo_tendencia_linear, h = tam_amostra_teste, level=0.95)
+modelo_tendencia_linear_proj <- forecast(modelo_tendencia_linear, h = amostra_teste, level=0.95)
 
 #plota o grafico da serie temporal de treinamento e teste
 
@@ -107,16 +114,14 @@ plot(modelo_tendencia_linear_proj, xlab="Tempo", ylab="Faturamento", xaxt="n" , 
 lines(validacao_ts)
 lines(modelo_tendencia_linear_proj$fitted, lwd=2, col="blue")
 
-
 #Verifica a acuracia do modelo
 accuracy(modelo_tendencia_linear_proj, validacao_ts)
-
 
 ##########################################################################
 #Modelo de Tendência Exponencial - Márcia
 ##########################################################################
   
-#Estima o modelo de tendÃªncia exp
+#Estima o modelo de tendência exp
 modelo_tendencia_exp <- tslm(treinamento_ts ~ trend, lambda=0)
 
 #resumo do modelo
@@ -127,18 +132,17 @@ modelo_tendencia_exp$coefficients
 modelo_tendencia_exp$residuals
 modelo_tendencia_exp$fitted.values
 
-
 ----------------------------
   
-#Verificando resÃ­duos
+#Verificando resíduos
 
-#Plotando os resÃ­duos
-plot(modelo_tendencia_exp$residuals, xlab="Data", ylab="ResÃ­duos", ylim=c(-1.2, 1.08), bty="l")
+#Plotando os resíduos
+plot(modelo_tendencia_exp$residuals, xlab="Data", ylab="Resíduos", ylim=c(-1.2, 1.08), bty="l")
 
-#calcula a autocorrelaÃ§Ã£o dos resÃ­duos
+#calcula a autocorrelação dos resíduos
 Acf(modelo_tendencia_exp$residuals)
 
-#verifica os resÃ­duos com teste de Ljung-Box
+#verifica os resíduos com teste de Ljung-Box
 checkresiduals(modelo_tendencia_exp, test="LB")
 
 ------------------------------
@@ -147,8 +151,8 @@ checkresiduals(modelo_tendencia_exp, test="LB")
 plot(treinamento_ts, xlab="Data", ylab="Faturamento", ylim=c(3850000, 98500000), bty="l")
 lines(modelo_tendencia_exp$fitted.values, lwd=2)
 
-#projeta o modelo durante o perÃ­odo de validaÃ§Ã£o
-modelo_tendencia_exp_proj <- forecast(modelo_tendencia_exp, h = tam_amostra_teste, level=0.95)
+#projeta o modelo durante o período de validação
+modelo_tendencia_exp_proj <- forecast(modelo_tendencia_exp, h = amostra_teste, level=0.95)
 
 #plota o grafico da serie temporal de treinamento e teste
 plot(modelo_tendencia_exp_proj, xlab="Data", ylab="Faturamento", xaxt="n" , ylim=c(3850000, 98500000), xlim=c(2011,2020), bty="l", flty=2 ,main="Forecast from Exp regression model")
@@ -164,7 +168,7 @@ lines(modelo_tendencia_exp_proj$fitted, lwd=2, col="blue")
 accuracy(modelo_tendencia_exp$fitted.values, treinamento_ts)
 
 #Calula o modelo naive
-modelo_naive <- naive(treinamento_ts, level=0, h=tam_amostra_teste)
+modelo_naive <- naive(treinamento_ts, level=0, h=amostra_teste)
 
 treinamento_ts[90]
 modelo_naive
@@ -180,15 +184,15 @@ axis(1, at=seq(2011, 2020, 1), labels=format(seq(2011, 2020,1)))
 lines(validacao_ts)
 
 ---------------------------
-#projetar para os prÃ³ximos 23 meses no futuro
+#projetar para os próximos 23 meses no futuro
 
 #primeiramente reestimamos o modelo com todos os dados de treinamento e validacao
-modelo_tendencia_exp_final <- tslm(Games_GFK_Brasil_ts ~ trend, lambda = 0)
+modelo_tendencia_exp_final <- tslm(games_ts ~ trend, lambda = 0)
 
 #sumario do modelo
 summary(modelo_tendencia_exp_final)
 
-#projeta os prÃ³ximos 23 meses do futuro
+#projeta os próximos 23 meses do futuro
 modelo_tendencia_exp_final_proj <- forecast(modelo_tendencia_exp_final, h=23, level=0.95)
 
 #plota o grafico da serie temporal de treinamento e teste
@@ -209,7 +213,7 @@ modelo_ses <- ets(treinamento_ts, model = "ANN")
 summary(modelo_ses)
 
 #projeta os proximos 23 meses
-modelo_ses_proj <- forecast(modelo_ses, h=tam_amostra_teste, level=0.95)
+modelo_ses_proj <- forecast(modelo_ses, h=amostra_teste, level=0.95)
 
 #plota o grafico da projecao
 plot(modelo_ses_proj, ylim=c(3850000, 98500000),ylab="Faturamento", xlab="Data", bty="l", xaxt="n", xlim=c(2011,2020.25), flty=2)
@@ -221,20 +225,20 @@ lines(modelo_ses$fitted, lwd=2, col="blue")
 lines(validacao_ts)
 
 #valida precisao
-accuracy(modelo_ses_proj,Games_GFK_Brasil_ts)
+accuracy(modelo_ses_proj,games_ts)
 
 
-#Verificando resÃ­duos
+#Verificando resíduos
 
-#Plotando os resÃ­duos
-plot(modelo_ses$residuals, xlab="Data", ylab="ResÃ­duos", ylim=c(-45000000,37000000), bty="l")
+#Plotando os resíduos
+plot(modelo_ses$residuals, xlab="Data", ylab="Resíduos", ylim=c(-45000000,37000000), bty="l")
 
 summary(modelo_ses_proj$residuals)
 
-#calcula a autocorrelaÃ§Ã£o dos resÃ­duos
+#calcula a autocorrelação dos resíduos
 Acf(modelo_ses$residuals)
 
-#verifica os resÃ­duos com teste de Ljung-Box
+#verifica os resíduos com teste de Ljung-Box
 checkresiduals(modelo_ses, test="LB")
 
 -------------------------------------------------------
@@ -242,12 +246,12 @@ checkresiduals(modelo_ses, test="LB")
 #Preparar projecao
 
 #primeiramente reestimamos o modelo com todos os dados de treinamento e validacao
-modelo_ses_final <- ets(Games_GFK_Brasil_ts, model = "ANN")
+modelo_ses_final <- ets(games_ts, model = "ANN")
 
 #sumario do modelo
 summary(modelo_ses_final)
 
-#projeta os prÃ³ximos 23 meses do futuro
+#projeta os próximos 23 meses do futuro
 modelo_ses_final_proj <- forecast(modelo_ses_final, h=23, level=0.95)
 
 #plota o grafico da serie temporal de treinamento e teste
@@ -269,7 +273,7 @@ modelo_ses <- ets(treinamento_ts, model = "ZZZ", restrict = FALSE, allow.multipl
 summary(modelo_ses)
 
 #projeta os proximos 23 meses
-modelo_ses_proj <- forecast(modelo_ses, h=tam_amostra_teste, level=0.95)
+modelo_ses_proj <- forecast(modelo_ses, h=amostra_teste, level=0.95)
 
 #plota o grafica da projecao
 plot(modelo_ses_proj, ylim=c(3850000, 98500000), ylab="Faturamento", xlab="Data", bty="l", xaxt="n", xlim=c(2011,2020.5), flty=2)
@@ -284,9 +288,87 @@ lines(validacao_ts)
 accuracy(modelo_ses_proj, validacao_ts)
 
 
-#calcula a autocorrelaÃ§Ã£o dos resÃ­duos
+#calcula a autocorrelação dos resíduos
 Acf(modelo_ses$residuals)
 
-#verifica os resÃ­duos com teste de Ljung-Box
+#verifica os resíduos com teste de Ljung-Box
 checkresiduals(modelo_ses, test="LB")
 
+# MODELO SAZONAL - INICIO (AMAURI)::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# Plota a série temporal de cada ano de acordo com o mês
+ggseasonplot(games_ts)
+
+# Cria dummies mensais
+dummies_mensais <- seasonaldummy(games_ts)
+dummies_mensais
+str(dummies_mensais)
+
+# Estima o modelo de tendência linear
+md_sazonal <- tslm(treinamento_ts ~ season)
+
+# Analise do modelo
+summary(md_sazonal)
+typeof(md_sazonal)
+
+# Verificanção dos resíduos
+View(md_sazonal$residuals)
+plot(md_sazonal$residuals, xlab="Tempo", ylab="Resíduos", ylim=c(-500, 500), bty="l")
+
+# Calcula a autocorrelação dos resíduos
+Acf(md_sazonal$residuals)
+
+# Verificação dos resíduos - Teste de Ljung-Box
+checkresiduals(md_sazonal, test="LB", plot = TRUE)
+plot(md_sazonal$residuals, xlab="Tempo", ylab="Resíduos", ylim=c(-500, 500), bty="l")
+
+# Calcula a autocorrelação dos resíduos
+Acf(md_sazonal$residuals)
+
+# Verificação dos resíduos - Teste de Ljung-Box
+checkresiduals(md_sazonal, test="LB", plot = TRUE)
+
+# Plot do modelo com sazonalidade
+plot(treinamento_ts, xlab="Tempo", ylab="Faturamento", ylim=c(3850331, 98420518), bty="l")
+lines(md_sazonal$fitted.values, lwd=2, col="blue")
+
+# Projeta o modelo durante o período de validação
+md_sazonal_proj <- forecast(md_sazonal, h = amostra_teste, level=0.95)
+
+# Plot da serie temporal - Treinamento e teste
+plot(md_sazonal_proj, xlab="Tempo", ylab="Faturamento", xaxt="n" , ylim=c(3850331, 98420518), xlim=c(2011, 2020), bty="l", flty=2, main="Forecast from Seasonal regression model")
+# Adiciona valores (referente aos anos) no eixo X
+axis(1, at=seq(2011, 2020, 1), labels=format(seq(2011, 2020, 1)))
+
+lines(validacao_ts)
+lines(md_sazonal_proj$fitted, lwd=2, col="blue")
+
+# Valida a acuracia do modelo
+accuracy(md_sazonal_proj, validacao_ts)
+# MODELO SAZONAL - FIM::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+# MODELO DE SUAVIZAÇÃO EXPONENCIAL COM TENDÊNCIA MULTIPLICATIVA(MNM) - INÍCIO (AMAURI)::::::::::::::
+# Estima o modelo de suavizacao  - Treinamento
+modelo_ses <- ets(treinamento_ts, model = "MNM")
+summary(modelo_ses)
+
+# Projeta os próximos 12 meses
+modelo_ses_proj <- forecast(modelo_ses, h=amostra_teste, level=0.95)
+
+# Plot do grafica da projecao
+plot(modelo_ses_proj, ylim=c(3850331, 98420518), ylab="Faturamento Pre-processado", xlab="Tempo", bty="l", xaxt="n", xlim=c(2011,2020), flty=2)
+axis(1, at=seq(2011, 2020, 1), labels=format(seq(2011, 2020, 1)))
+lines(modelo_ses$fitted, lwd=2, col="blue")
+lines(validacao_ts)
+
+# Valida a acuracia do modelo
+accuracy(modelo_ses_proj, games_ts)
+
+# Verificando resíduos
+plot(modelo_ses$residuals, xlab="Tempo", ylab="Resíduos", ylim=c(-500, 500), bty="l")
+
+# Calculo da autocorrelação dos resíduos
+Acf(modelo_ses$residuals)
+
+# Verificação dos resíduos - Teste de Ljung-Box
+checkresiduals(modelo_ses, test="LB")
+# MODELO DE SUAVIZAÇÃO EXPONENCIAL COM TENDÊNCIA MULTIPLICATIVA(MNM) - FIM::::::::::::::::::::::::::
