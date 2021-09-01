@@ -368,7 +368,7 @@ lines(modelo_ses_final_proj$fitted, lwd=2, col="blue")
 
 
 ############################################################################################
-#projeção série com algoritmo de busca de melhor modelo - Márcia
+#3.13 Modelo de Suavização com Algoritmo de Otimização - Márcia
 ############################################################################################
 
 #estima o modelo de suavizacao na base de treinamento
