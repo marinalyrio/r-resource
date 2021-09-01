@@ -80,7 +80,7 @@ lines(validacao_ts)
 # MODELO NAIVE - FIM :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 ##########################################################################
-#Modelo de Tendência Linear - Caio
+#3.3 Modelo de Tendência Linear - Caio
 ##########################################################################
 
 #Estima o modelo de tendência linear
@@ -118,7 +118,13 @@ lines(modelo_tendencia_linear_proj$fitted, lwd=2, col="blue")
 accuracy(modelo_tendencia_linear_proj, validacao_ts)
 
 ##########################################################################
-#Modelo de Tendência Exponencial - Márcia
+#3.4 Modelo de Tendência Quadrático - Isabella
+##########################################################################
+
+
+
+##########################################################################
+#3.5 Modelo de Tendência Exponencial - Márcia
 ##########################################################################
   
 #Estima o modelo de tendência exp
