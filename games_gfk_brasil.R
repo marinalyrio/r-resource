@@ -211,7 +211,57 @@ lines(modelo_tendencia_exp_final_proj$fitted, lwd=2, col="blue")
 ##########################################################################
 #3.6 Modelo Sazonal - Amauri
 ##########################################################################
+# MODELO SAZONAL - INICIO (AMAURI)::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# Plota a série temporal de cada ano de acordo com o mês
+ggseasonplot(games_ts)
 
+# Cria dummies mensais
+dummies_mensais <- seasonaldummy(games_ts)
+dummies_mensais
+str(dummies_mensais)
+
+# Estima o modelo de tendência linear
+md_sazonal <- tslm(treinamento_ts ~ season)
+
+# Analise do modelo
+summary(md_sazonal)
+typeof(md_sazonal)
+
+# Verificanção dos resíduos
+View(md_sazonal$residuals)
+plot(md_sazonal$residuals, xlab="Tempo", ylab="Resíduos", ylim=c(-500, 500), bty="l")
+
+# Calcula a autocorrelação dos resíduos
+Acf(md_sazonal$residuals)
+
+# Verificação dos resíduos - Teste de Ljung-Box
+checkresiduals(md_sazonal, test="LB", plot = TRUE)
+plot(md_sazonal$residuals, xlab="Tempo", ylab="Resíduos", ylim=c(-500, 500), bty="l")
+
+# Calcula a autocorrelação dos resíduos
+Acf(md_sazonal$residuals)
+
+# Verificação dos resíduos - Teste de Ljung-Box
+checkresiduals(md_sazonal, test="LB", plot = TRUE)
+
+# Plot do modelo com sazonalidade
+plot(treinamento_ts, xlab="Tempo", ylab="Faturamento", ylim=c(3850331, 98420518), bty="l")
+lines(md_sazonal$fitted.values, lwd=2, col="blue")
+
+# Projeta o modelo durante o período de validação
+md_sazonal_proj <- forecast(md_sazonal, h = amostra_teste, level=0.95)
+
+# Plot da serie temporal - Treinamento e teste
+plot(md_sazonal_proj, xlab="Tempo", ylab="Faturamento", xaxt="n" , ylim=c(3850331, 98420518), xlim=c(2011, 2020), bty="l", flty=2, main="Forecast from Seasonal regression model")
+# Adiciona valores (referente aos anos) no eixo X
+axis(1, at=seq(2011, 2020, 1), labels=format(seq(2011, 2020, 1)))
+
+lines(validacao_ts)
+lines(md_sazonal_proj$fitted, lwd=2, col="blue")
+
+# Valida a acuracia do modelo
+accuracy(md_sazonal_proj, validacao_ts)
+# MODELO SAZONAL - FIM::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 
 ##########################################################################
@@ -348,6 +398,10 @@ Acf(modelo_ses$residuals)
 
 #verifica os resíduos com teste de Ljung-Box
 checkresiduals(modelo_ses, test="LB")
+
+
+#########################################################################################################################
+
 
 # MODELO SAZONAL - INICIO (AMAURI)::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Plota a série temporal de cada ano de acordo com o mês
