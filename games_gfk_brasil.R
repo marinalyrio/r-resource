@@ -208,6 +208,50 @@ lines(validacao_ts)
 lines(treinamento_ts)
 lines(modelo_tendencia_exp_final_proj$fitted, lwd=2, col="blue")
 
+##########################################################################
+#3.6 Modelo Sazonal - Amauri
+##########################################################################
+
+
+
+##########################################################################
+#3.7 Modelo com Sazonalidade e Tendência Quadrática - Caio
+##########################################################################
+
+#Estima o modelo de tendência linear
+modelo_sazonal_tend_linear <- tslm(treinamento_ts ~ season + trend + I(trend^2))
+
+#resumo do modelo
+summary(modelo_sazonal_tend_linear)
+
+#Verificando resíduos
+
+#Plotando os resíduos
+plot(modelo_sazonal_tend_linear$residuals, xlab="Tempo", ylab="Resíduos", ylim=c(-500, 500), bty="l")
+
+#calcula a autocorrelação dos resíduos
+Acf(modelo_sazonal_tend_linear$residuals)
+
+#verifica os resíduos com teste de Ljung-Box
+checkresiduals(modelo_sazonal_tend_linear, test="LB")
+
+#plot modelo com sazonal_tend
+plot(treinamento_ts, xlab="Tempo", ylab="Passageiros", bty="l")
+lines(modelo_sazonal_tend_linear$fitted.values, lwd=2, col="blue")
+
+#projeta o modelo durante o período de validação
+modelo_sazonal_tend_linear_proj <- forecast(modelo_sazonal_tend_linear, h = tam_amostra_teste, level=0.95)
+
+#plota o grafico da serie temporal de treinamento e teste
+plot(modelo_sazonal_tend_linear_proj, xlab="Tempo", ylab="Faturamento", xaxt="n" , bty="l", flty=2, main="Forecast from Seasonal & Tendencia regression model")
+lines(validacao_ts)
+lines(modelo_sazonal_tend_linear_proj$fitted, lwd=2, col="blue")
+
+
+#Verifica a acuracia do modelo
+accuracy(modelo_sazonal_tend_linear_proj, validacao_ts)
+
+
 
 ################################################################################
 #Modelo de Suavização sem tendência e sazonalidade - Márcia
