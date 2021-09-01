@@ -251,10 +251,15 @@ lines(modelo_sazonal_tend_linear_proj$fitted, lwd=2, col="blue")
 #Verifica a acuracia do modelo
 accuracy(modelo_sazonal_tend_linear_proj, validacao_ts)
 
+################################################################################
+#3.8 Modelo de Média Móvel - Isabella
+################################################################################
+
+
 
 
 ################################################################################
-#Modelo de Suavização sem tendência e sazonalidade - Márcia
+#3.9 Modelo de Suavização sem tendência e sazonalidade - Márcia
 ################################################################################
 
 #estima o modelo de suavizacao na base de treinamento
