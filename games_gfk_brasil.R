@@ -396,6 +396,10 @@ Acf(modelo_ses$residuals)
 checkresiduals(modelo_ses, test="LB")
 # MODELO DE SUAVIZAÇÃO EXPONENCIAL COM TENDÊNCIA MULTIPLICATIVA(MNM) - FIM::::::::::::::::::::::::::
 
+############################################################################################
+#3.11 3.11 Modelo de Suavização com Tendência e Sazonalidade Aditiva - Caio
+############################################################################################
+
 
 
 ############################################################################################
