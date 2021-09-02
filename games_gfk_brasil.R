@@ -397,7 +397,13 @@ checkresiduals(modelo_ses, test="LB")
 # MODELO DE SUAVIZAÇÃO EXPONENCIAL COM TENDÊNCIA MULTIPLICATIVA(MNM) - FIM::::::::::::::::::::::::::
 
 ############################################################################################
-#3.11 3.11 Modelo de Suavização com Tendência e Sazonalidade Aditiva - Caio
+#3.11 Modelo de Suavização com Tendência e Sazonalidade Aditiva - Caio
+############################################################################################
+
+
+
+############################################################################################
+#3.12 Modelo Exponencial com Tendência Aditiva e Sazonalidade Multiplicativa - Isabella
 ############################################################################################
 
 
@@ -433,6 +439,10 @@ Acf(modelo_ses$residuals)
 
 #verifica os resíduos com teste de Ljung-Box
 checkresiduals(modelo_ses, test="LB")
+
+############################################################################################
+#3.14 Modelo SARIMA - Caio
+############################################################################################
 
 
 #########################################################################################################################
