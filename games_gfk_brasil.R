@@ -121,6 +121,53 @@ accuracy(modelo_tendencia_linear_proj, validacao_ts)
 #3.4 Modelo de Tendência Quadrático - Isabella
 ##########################################################################
 
+#Séries Temporais de Treinamento e Validação já criadas
+treinamento_ts
+validacao_ts
+tam_amostra_teste
+tam_amostra_treinamento
+
+#plota o grafico da serie temporal de treinamento e teste
+plot(treinamento_ts, xlab="Data", ylab="Faturamento", xaxt="n" , ylim=c(3850000, 98500000), xlim=c(2011, 2022), bty="l")
+
+axis(1, at=seq(2011, 2022, 1), labels=format(seq(2011, 2022,1)))
+
+lines(validacao_ts, bty="l", col="red")
+
+#Estima o modelo de tendÃªncia poli
+modelo_tendencia_poli <- tslm(treinamento_ts ~ trend + I(trend^2))
+
+#resumo do modelo
+summary(modelo_tendencia_poli)
+
+#Verificando resíduos
+
+#Plotando os resíduos
+plot(modelo_tendencia_poli$residuals, xlab="Data", ylab="Resíduos", ylim=c(-500, 500), bty="l")
+
+#calcula a autocorrelaÃ§Ã£o dos resÃ­duos
+Acf(modelo_tendencia_poli$residuals)
+
+#verifica os resíduos com teste de Ljung-Box
+checkresiduals(modelo_tendencia_poli, test="LB")
+
+#plot modelo com tendencia
+plot(treinamento_ts, xlab="Tempo", ylab="Faturamento", ylim=c(3850000, 98500000), bty="l")
+lines(modelo_tendencia_poli$fitted.values, lwd=2)
+
+#projeta o modelo durante o perÃ­odo de validaÃ§Ã£o
+modelo_tendencia_poli_proj <- forecast(modelo_tendencia_poli, h = tam_amostra_teste, level=0.95)
+
+#plota o grafico da serie temporal de treinamento e teste
+plot(modelo_tendencia_poli_proj, xlab="Tempo", ylab="Faturamento", xaxt="n" , ylim=c(3850000, 98500000), xlim=c(2011, 2022), bty="l", flty=2,main="Forecast from Polynomial regression model")
+
+axis(1, at=seq(2011, 2022, 1), labels=format(seq(2011, 2022,1)))
+
+lines(validacao_ts)
+lines(modelo_tendencia_poli_proj$fitted, lwd=2, col="blue")
+
+#Verifica a acuracia do modelo
+accuracy(modelo_tendencia_poli_proj, validacao_ts)
 
 
 ##########################################################################
@@ -305,6 +352,63 @@ accuracy(modelo_sazonal_tend_linear_proj, validacao_ts)
 #3.8 Modelo de Média Móvel - Isabella
 ################################################################################
 
+#calcula a media movel simples
+ma_simples <- rollmean(Games_GFK_Brasil_ts, k=12, align="right")
+
+#calcula a media centrada
+ma_centrada <- ma(Games_GFK_Brasil_ts, order=12)
+
+#plota as medias 
+plot(Games_GFK_Brasil_ts, ylim=c(3850000, 98500000), ylab="Faturamento", xlab="Data", bty="l", xaxt="n", xlim=c(2011,2021.5))
+
+axis(1, at=seq(2011,2021.5, 1), labels=format(seq(2011,2021.5, 1)))
+
+lines(ma_centrada, lwd=2)
+
+lines(ma_simples, lwd=2, lty=2)
+
+legend(2018,98500000, c("Faturamento", "MA Centrada", "MA Simples"), lty=c(1,1,2), lwd=c(1,2,2), bty="n")
+
+#Séries Temporais de Treinamento e Validação já criadas
+treinamento_ts
+validacao_ts
+tam_amostra_teste
+tam_amostra_treinamento
+
+#estima o modelo de MA na base de treinamento
+ma_simples <- rollmean(treinamento_ts, k=12, align="right")
+
+#obtem a média da última janela movel de 12 meses para projeção
+ultima_ma <- tail(ma_simples, 1)
+
+#cria uma projeção que é a repeticao da ultima media da janela para o periodo de validacao
+ma_simples_proj <- ts(rep(ultima_ma, tam_amostra_teste), start=c(2011, tam_amostra_treinamento+1), end = c(2011, tam_amostra_treinamento + tam_amostra_teste), freq=12)
+
+#plota o grafico da projecao
+plot(treinamento_ts, ylim=c(3850000, 98500000), ylab="Faturamento", xlab="Data", bty="l", xaxt="n", xlim=c(2011,2021.5))
+
+axis(1, at=seq(2011, 2022, 1), labels=format(seq(2011, 2022, 1)))
+
+lines(ma_simples, lwd=2, col="blue")
+
+lines(ma_simples_proj, lwd=2, lty=2, col="blue")
+
+lines(validacao_ts)
+
+#valida a precisao da estimacao no periodo de treinamento
+accuracy(ma_simples, treinamento_ts)
+
+#valida a precisao da estimacao no periodo de validacao
+accuracy(ma_simples_proj, validacao_ts)
+
+#Plotando os resíduos
+plot(treinamento_ts-ma_simples, xlab="Tempo", ylab="ResÃ­duos", ylim=c(-500, 500), bty="l")
+
+#calcula a autocorrelação dos resíduos
+Acf(treinamento_ts-ma_simples)
+
+#verifica os resíduos com teste de Ljung-Box
+checkresiduals(treinamento_ts-ma_simples, test="LB")
 
 
 
