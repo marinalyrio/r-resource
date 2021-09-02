@@ -366,6 +366,37 @@ axis(1, at=seq(2011, 2022.5, 1), labels=format(seq(2011, 2022.5,1)))
 
 lines(modelo_ses_final_proj$fitted, lwd=2, col="blue")
 
+############################################################################################
+#3.10 Modelo de Suavização Exponencial com tendência Multiplicativa(MNM) - Amauri
+############################################################################################
+# MODELO DE SUAVIZAÇÃO EXPONENCIAL COM TENDÊNCIA MULTIPLICATIVA(MNM) - INÍCIO (AMAURI)::::::::::::::
+# Estima o modelo de suavizacao  - Treinamento
+modelo_ses <- ets(treinamento_ts, model = "MNM")
+summary(modelo_ses)
+
+# Projeta os próximos 12 meses
+modelo_ses_proj <- forecast(modelo_ses, h=amostra_teste, level=0.95)
+
+# Plot do grafica da projecao
+plot(modelo_ses_proj, ylim=c(3850331, 98420518), ylab="Faturamento Pre-processado", xlab="Tempo", bty="l", xaxt="n", xlim=c(2011,2020), flty=2)
+axis(1, at=seq(2011, 2020, 1), labels=format(seq(2011, 2020, 1)))
+lines(modelo_ses$fitted, lwd=2, col="blue")
+lines(validacao_ts)
+
+# Valida a acuracia do modelo
+accuracy(modelo_ses_proj, games_ts)
+
+# Verificando resíduos
+plot(modelo_ses$residuals, xlab="Tempo", ylab="Resíduos", ylim=c(-500, 500), bty="l")
+
+# Calculo da autocorrelação dos resíduos
+Acf(modelo_ses$residuals)
+
+# Verificação dos resíduos - Teste de Ljung-Box
+checkresiduals(modelo_ses, test="LB")
+# MODELO DE SUAVIZAÇÃO EXPONENCIAL COM TENDÊNCIA MULTIPLICATIVA(MNM) - FIM::::::::::::::::::::::::::
+
+
 
 ############################################################################################
 #3.13 Modelo de Suavização com Algoritmo de Otimização - Márcia
