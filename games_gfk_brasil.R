@@ -12,7 +12,7 @@
 # --------------------------------------------------------------------------------------------------
 # ==================================================================================================
 ##########################################################################
-# Organização da Base de dados - Márcia
+# Organização da Base de dados
 ##########################################################################
 # --------------------------------------------------------------------------------------------------
 # ==================================================================================================
@@ -80,7 +80,7 @@ lines(validacao_ts)
 # MODELO NAIVE - FIM :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 ##########################################################################
-#3.3 Modelo de Tendência Linear - Caio
+#3.3 Modelo de Tendência Linear
 ##########################################################################
 
 #Estima o modelo de tendência linear
@@ -118,7 +118,7 @@ lines(modelo_tendencia_linear_proj$fitted, lwd=2, col="blue")
 accuracy(modelo_tendencia_linear_proj, validacao_ts)
 
 ##########################################################################
-#3.4 Modelo de Tendência Quadrático - Isabella
+#3.4 Modelo de Tendência Quadrático 
 ##########################################################################
 
 #Séries Temporais de Treinamento e Validação já criadas
@@ -171,7 +171,7 @@ accuracy(modelo_tendencia_poli_proj, validacao_ts)
 
 
 ##########################################################################
-#3.5 Modelo de Tendência Exponencial - Márcia
+#3.5 Modelo de Tendência Exponencial
 ##########################################################################
   
 #Estima o modelo de tendência exp
@@ -256,7 +256,7 @@ lines(treinamento_ts)
 lines(modelo_tendencia_exp_final_proj$fitted, lwd=2, col="blue")
 
 ##########################################################################
-#3.6 Modelo Sazonal - Amauri
+#3.6 Modelo Sazonal
 ##########################################################################
 # MODELO SAZONAL - INICIO (AMAURI)::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Plota a série temporal de cada ano de acordo com o mês
@@ -312,7 +312,7 @@ accuracy(md_sazonal_proj, validacao_ts)
 
 
 ##########################################################################
-#3.7 Modelo com Sazonalidade e Tendência Quadrática - Caio
+#3.7 Modelo com Sazonalidade e Tendência Quadrática
 ##########################################################################
 
 #Estima o modelo de tendência linear
@@ -349,7 +349,7 @@ lines(modelo_sazonal_tend_linear_proj$fitted, lwd=2, col="blue")
 accuracy(modelo_sazonal_tend_linear_proj, validacao_ts)
 
 ################################################################################
-#3.8 Modelo de Média Móvel - Isabella
+#3.8 Modelo de Média Móvel
 ################################################################################
 
 #calcula a media movel simples
@@ -413,7 +413,7 @@ checkresiduals(treinamento_ts-ma_simples, test="LB")
 
 
 ################################################################################
-#3.9 Modelo de Suavização sem tendência e sazonalidade - Márcia
+#3.9 Modelo de Suavização sem tendência e sazonalidade
 ################################################################################
 
 #estima o modelo de suavizacao na base de treinamento
@@ -471,7 +471,7 @@ axis(1, at=seq(2011, 2022.5, 1), labels=format(seq(2011, 2022.5,1)))
 lines(modelo_ses_final_proj$fitted, lwd=2, col="blue")
 
 ############################################################################################
-#3.10 Modelo de Suavização Exponencial com tendência Multiplicativa(MNM) - Amauri
+#3.10 Modelo de Suavização Exponencial com tendência Multiplicativa(MNM)
 ############################################################################################
 # MODELO DE SUAVIZAÇÃO EXPONENCIAL COM TENDÊNCIA MULTIPLICATIVA(MNM) - INÍCIO (AMAURI)::::::::::::::
 # Estima o modelo de suavizacao  - Treinamento
@@ -501,7 +501,7 @@ checkresiduals(modelo_ses, test="LB")
 # MODELO DE SUAVIZAÇÃO EXPONENCIAL COM TENDÊNCIA MULTIPLICATIVA(MNM) - FIM::::::::::::::::::::::::::
 
 ############################################################################################
-#3.11 Modelo de Suavização com Tendência e Sazonalidade Aditiva - Caio
+#3.11 Modelo de Suavização com Tendência e Sazonalidade Aditiva
 ############################################################################################
 
 #estima o modelo de suavizacao na base de treinamento
@@ -530,13 +530,13 @@ checkresiduals(modelo_ses, test="LB")
 
 
 ############################################################################################
-#3.12 Modelo Exponencial com Tendência Aditiva e Sazonalidade Multiplicativa - Isabella
+#3.12 Modelo Exponencial com Tendência Aditiva e Sazonalidade Multiplicativa- Isabella
 ############################################################################################
 
 
 
 ############################################################################################
-#3.13 Modelo de Suavização com Algoritmo de Otimização - Márcia
+#3.13 Modelo de Suavização com Algoritmo de Otimização
 ############################################################################################
 
 #estima o modelo de suavizacao na base de treinamento
@@ -568,7 +568,7 @@ Acf(modelo_ses$residuals)
 checkresiduals(modelo_ses, test="LB")
 
 ############################################################################################
-#3.14 Modelo SARIMA - Caio
+#3.14 Modelo SARIMA
 ############################################################################################
 
 #Modelo Arima
@@ -598,90 +598,8 @@ checkresiduals(modelo_ARIMA_proj, test="LB")
 
 
 ############################################################################################
-#4. Projeção Modelo FInal
+#4. Projeção Modelo Final
 ############################################################################################
 
 
 
-
-#########################################################################################################################
-
-
-# MODELO SAZONAL - INICIO (AMAURI)::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# Plota a série temporal de cada ano de acordo com o mês
-ggseasonplot(games_ts)
-
-# Cria dummies mensais
-dummies_mensais <- seasonaldummy(games_ts)
-dummies_mensais
-str(dummies_mensais)
-
-# Estima o modelo de tendência linear
-md_sazonal <- tslm(treinamento_ts ~ season)
-
-# Analise do modelo
-summary(md_sazonal)
-typeof(md_sazonal)
-
-# Verificanção dos resíduos
-View(md_sazonal$residuals)
-plot(md_sazonal$residuals, xlab="Tempo", ylab="Resíduos", ylim=c(-500, 500), bty="l")
-
-# Calcula a autocorrelação dos resíduos
-Acf(md_sazonal$residuals)
-
-# Verificação dos resíduos - Teste de Ljung-Box
-checkresiduals(md_sazonal, test="LB", plot = TRUE)
-plot(md_sazonal$residuals, xlab="Tempo", ylab="Resíduos", ylim=c(-500, 500), bty="l")
-
-# Calcula a autocorrelação dos resíduos
-Acf(md_sazonal$residuals)
-
-# Verificação dos resíduos - Teste de Ljung-Box
-checkresiduals(md_sazonal, test="LB", plot = TRUE)
-
-# Plot do modelo com sazonalidade
-plot(treinamento_ts, xlab="Tempo", ylab="Faturamento", ylim=c(3850331, 98420518), bty="l")
-lines(md_sazonal$fitted.values, lwd=2, col="blue")
-
-# Projeta o modelo durante o período de validação
-md_sazonal_proj <- forecast(md_sazonal, h = amostra_teste, level=0.95)
-
-# Plot da serie temporal - Treinamento e teste
-plot(md_sazonal_proj, xlab="Tempo", ylab="Faturamento", xaxt="n" , ylim=c(3850331, 98420518), xlim=c(2011, 2020), bty="l", flty=2, main="Forecast from Seasonal regression model")
-# Adiciona valores (referente aos anos) no eixo X
-axis(1, at=seq(2011, 2020, 1), labels=format(seq(2011, 2020, 1)))
-
-lines(validacao_ts)
-lines(md_sazonal_proj$fitted, lwd=2, col="blue")
-
-# Valida a acuracia do modelo
-accuracy(md_sazonal_proj, validacao_ts)
-# MODELO SAZONAL - FIM::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
-# MODELO DE SUAVIZAÇÃO EXPONENCIAL COM TENDÊNCIA MULTIPLICATIVA(MNM) - INÍCIO (AMAURI)::::::::::::::
-# Estima o modelo de suavizacao  - Treinamento
-modelo_ses <- ets(treinamento_ts, model = "MNM")
-summary(modelo_ses)
-
-# Projeta os próximos 12 meses
-modelo_ses_proj <- forecast(modelo_ses, h=amostra_teste, level=0.95)
-
-# Plot do grafica da projecao
-plot(modelo_ses_proj, ylim=c(3850331, 98420518), ylab="Faturamento Pre-processado", xlab="Tempo", bty="l", xaxt="n", xlim=c(2011,2020), flty=2)
-axis(1, at=seq(2011, 2020, 1), labels=format(seq(2011, 2020, 1)))
-lines(modelo_ses$fitted, lwd=2, col="blue")
-lines(validacao_ts)
-
-# Valida a acuracia do modelo
-accuracy(modelo_ses_proj, games_ts)
-
-# Verificando resíduos
-plot(modelo_ses$residuals, xlab="Tempo", ylab="Resíduos", ylim=c(-500, 500), bty="l")
-
-# Calculo da autocorrelação dos resíduos
-Acf(modelo_ses$residuals)
-
-# Verificação dos resíduos - Teste de Ljung-Box
-checkresiduals(modelo_ses, test="LB")
-# MODELO DE SUAVIZAÇÃO EXPONENCIAL COM TENDÊNCIA MULTIPLICATIVA(MNM) - FIM::::::::::::::::::::::::::
