@@ -601,5 +601,20 @@ checkresiduals(modelo_ARIMA_proj, test="LB")
 #4. Projeção Modelo Final
 ############################################################################################
 
+#estima o modelo de suavizacao na base completa
+modelo_sazonal_tend_linear_final <- tslm(Games_GFK_Brasil_ts ~ season + trend + I(trend^2))
 
+
+#resumo modelo
+summary(modelo_sazonal_tend_linear_final)
+
+#projeta os proximos 24 meses
+modelo_sazonal_tend_linear_final_proj <- forecast(modelo_sazonal_tend_linear_final, h=24, level=0.95)
+
+forecast(modelo_sazonal_tend_linear_final, h=24, level=0.95)
+
+#plota o grafico da projecao
+plot(modelo_sazonal_tend_linear_final_proj, ylab="Faturamento Pre-processado", xlab="Tempo", bty="l", xaxt="n", xlim=c(2011,2023), flty=2)
+axis(1, at=seq(2011, 2023, 1), labels=format(seq(2011, 2023, 1)))
+lines(modelo_sazonal_tend_linear_final$fitted, lwd=2, col="blue")
 
