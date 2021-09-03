@@ -571,6 +571,38 @@ checkresiduals(modelo_ses, test="LB")
 #3.14 Modelo SARIMA - Caio
 ############################################################################################
 
+#Modelo Arima
+Modelo_ARIMA <- auto.arima(treinamento_ts, stepwise=FALSE, approximation = FALSE)
+
+
+#resumo modelo
+summary(Modelo_ARIMA)
+
+#projeta os proximos 12 meses
+modelo_ARIMA_proj <- forecast(Modelo_ARIMA, h=tam_amostra_teste, level=0.95)
+
+#plota o grafica da projecao
+
+plot(modelo_ARIMA_proj, ylim=c(3850331, 98420518), ylab="Faturamento Pre-processado", xlab="Tempo", bty="l", xaxt="n", xlim=c(2011,2020), flty=2)
+axis(1, at=seq(2011, 2020, 1), labels=format(seq(2011, 2020, 1)))
+lines(modelo_ses$fitted, lwd=2, col="blue")
+lines(validacao_ts)
+
+
+lines(validacao_ts)
+
+#verifica precisao
+accuracy(modelo_ARIMA_proj, validacao_ts)
+
+checkresiduals(modelo_ARIMA_proj, test="LB")
+
+
+############################################################################################
+#4. Projeção Modelo FInal
+############################################################################################
+
+
+
 
 #########################################################################################################################
 
