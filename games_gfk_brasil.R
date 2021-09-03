@@ -504,7 +504,28 @@ checkresiduals(modelo_ses, test="LB")
 #3.11 Modelo de Suavização com Tendência e Sazonalidade Aditiva - Caio
 ############################################################################################
 
+#estima o modelo de suavizacao na base de treinamento
+modelo_ses <- ets(treinamento_ts, model = "AAA")
 
+#resumo modelo
+summary(modelo_ses)
+
+#projeta os proximos 12 meses
+modelo_ses_proj <- forecast(modelo_ses, h=tam_amostra_teste, level=0.95)
+
+#plota o grafica da projecao
+plot(modelo_ses_proj, ylab="Forecast", xlab="Tempo", bty="l", xaxt="n", flty=2)
+lines(modelo_ses$fitted, lwd=2, col="blue")
+lines(validacao_ts)
+
+#verifica precisao
+accuracy(modelo_ses_proj, validacao_ts)
+
+#calcula a autocorrelaÃ§Ã£o dos resÃ­duos
+Acf(modelo_ses$residuals)
+
+#verifica os resÃ­duos com teste de Ljung-Box
+checkresiduals(modelo_ses, test="LB")
 
 ############################################################################################
 #3.12 Modelo Exponencial com Tendência Aditiva e Sazonalidade Multiplicativa - Isabella
