@@ -530,7 +530,7 @@ checkresiduals(modelo_ses, test="LB")
 
 
 ############################################################################################
-#3.12 Modelo Exponencial com Tendência Aditiva e Sazonalidade Multiplicativa- Isabella
+#3.12 Modelo Exponencial com Tendência Aditiva e Sazonalidade Multiplicativa
 ############################################################################################
 
 #estima o modelo de suavizacao na base de treinamento
