@@ -533,6 +533,48 @@ checkresiduals(modelo_ses, test="LB")
 #3.12 Modelo Exponencial com Tendência Aditiva e Sazonalidade Multiplicativa- Isabella
 ############################################################################################
 
+#estima o modelo de suavizacao na base de treinamento
+modelo_ses <- ets(treinamento_ts, model = "MAM")
+
+#resumo modelo
+summary(modelo_ses)
+
+#projeta os proximos 12 meses
+modelo_ses_proj <- forecast(modelo_ses, h=tam_amostra_teste, level=0.95)
+
+#plota o grafica da projecao
+plot(modelo_ses_proj, ylim=c(3850000, 98500000), ylab="Faturamento", xlab="Data", bty="l", xaxt="n", xlim=c(2011, 2022), flty=2)
+
+axis(1, at=seq(2011, 2022, 1), labels=format(seq(2011, 2022, 1)))
+
+lines(modelo_ses$fitted, lwd=2, col="blue")
+
+lines(validacao_ts)
+
+#verifica precisao
+accuracy(modelo_ses_proj, validacao_ts)
+
+#calcula a autocorrelaÃ§Ã£o dos resÃ­duos
+Acf(modelo_ses$residuals)
+
+#verifica os resÃ­duos com teste de Ljung-Box
+checkresiduals(modelo_ses, test="LB")
+
+#Preparar projecao
+
+#primeiramente reestimamos o modelo com todos os dados de treinamento e validacao
+modelo_ses_final <- ets(Games_GFK_Brasil_ts, model = "MAM")
+
+#sumario do modelo
+summary(modelo_ses_final)
+
+#projeta os prÃ³ximos 36 meses do futuro
+modelo_ses_final_proj <- forecast(modelo_ses_final, h=36, level=0.95)
+
+#plota o grafico da serie temporal de treinamento e teste
+plot(modelo_ses_final_proj, xlab="Data", ylab="Faturamento", ylim=c(-30000000, 98500000), xlim=c(2011, 2023), bty="l", flty=2, main="Série com Tendência Aditiva e Sazonalidade Multiplicativa")
+axis(1, at=seq(2011, 2023, 1), labels=format(seq(2011, 2023,1)))
+lines(modelo_ses_final_proj$fitted, lwd=2, col="blue")
 
 
 ############################################################################################
