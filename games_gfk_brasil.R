@@ -65,7 +65,7 @@ plot(treinamento_ts, xlab="Data", ylab="Faturamento", xaxt="n" , ylim=c(3850000,
 axis(1, at=seq(2011, 2021, 1), labels=format(seq(2011, 2021,1)))
 lines(validacao_ts, bty="l", col="red")
 
-# MODELO NAIVE - INICIO (AMAURI)::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# 3.2 MODELO NAIVE - INICIO ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Caculo do modelo naive
 modelo_naive <- naive(treinamento_ts, level=0, h=amostra_teste)
 modelo_naive
@@ -184,8 +184,6 @@ summary(modelo_tendencia_exp)
 modelo_tendencia_exp$coefficients
 modelo_tendencia_exp$residuals
 modelo_tendencia_exp$fitted.values
-
-----------------------------
   
 #Verificando resíduos
 
@@ -197,8 +195,6 @@ Acf(modelo_tendencia_exp$residuals)
 
 #verifica os resíduos com teste de Ljung-Box
 checkresiduals(modelo_tendencia_exp, test="LB")
-
-------------------------------
   
 #plot modelo com tendencia
 plot(treinamento_ts, xlab="Data", ylab="Faturamento", ylim=c(3850000, 98500000), bty="l")
@@ -215,7 +211,6 @@ axis(1, at=seq(2011, 2020, 1), labels=format(seq(2011, 2020,1)))
 lines(validacao_ts)
 lines(treinamento_ts)
 lines(modelo_tendencia_exp_proj$fitted, lwd=2, col="blue")
-
 
 #Verifica a acuracia do modelo
 accuracy(modelo_tendencia_exp$fitted.values, treinamento_ts)
@@ -236,7 +231,6 @@ axis(1, at=seq(2011, 2020, 1), labels=format(seq(2011, 2020,1)))
 
 lines(validacao_ts)
 
----------------------------
 #projetar para os próximos 23 meses no futuro
 
 #primeiramente reestimamos o modelo com todos os dados de treinamento e validacao
@@ -258,7 +252,7 @@ lines(modelo_tendencia_exp_final_proj$fitted, lwd=2, col="blue")
 ##########################################################################
 #3.6 Modelo Sazonal
 ##########################################################################
-# MODELO SAZONAL - INICIO (AMAURI)::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# MODELO SAZONAL - INICIO :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 # Plota a série temporal de cada ano de acordo com o mês
 ggseasonplot(games_ts)
 
@@ -411,7 +405,6 @@ Acf(treinamento_ts-ma_simples)
 checkresiduals(treinamento_ts-ma_simples, test="LB")
 
 
-
 ################################################################################
 #3.9 Modelo de Suavização sem tendência e sazonalidade
 ################################################################################
@@ -450,10 +443,7 @@ Acf(modelo_ses$residuals)
 #verifica os resíduos com teste de Ljung-Box
 checkresiduals(modelo_ses, test="LB")
 
--------------------------------------------------------
-  
 #Preparar projecao
-
 #primeiramente reestimamos o modelo com todos os dados de treinamento e validacao
 modelo_ses_final <- ets(games_ts, model = "ANN")
 
@@ -473,7 +463,7 @@ lines(modelo_ses_final_proj$fitted, lwd=2, col="blue")
 ############################################################################################
 #3.10 Modelo de Suavização Exponencial com tendência Multiplicativa(MNM)
 ############################################################################################
-# MODELO DE SUAVIZAÇÃO EXPONENCIAL COM TENDÊNCIA MULTIPLICATIVA(MNM) - INÍCIO (AMAURI)::::::::::::::
+# MODELO DE SUAVIZAÇÃO EXPONENCIAL COM TENDÊNCIA MULTIPLICATIVA(MNM) - INÍCIO ::::::::::::::::::::
 # Estima o modelo de suavizacao  - Treinamento
 modelo_ses <- ets(treinamento_ts, model = "MNM")
 summary(modelo_ses)
@@ -616,7 +606,6 @@ checkresiduals(modelo_ses, test="LB")
 #Modelo Arima
 Modelo_ARIMA <- auto.arima(treinamento_ts, stepwise=FALSE, approximation = FALSE)
 
-
 #resumo modelo
 summary(Modelo_ARIMA)
 
@@ -630,14 +619,9 @@ axis(1, at=seq(2011, 2020, 1), labels=format(seq(2011, 2020, 1)))
 lines(modelo_ses$fitted, lwd=2, col="blue")
 lines(validacao_ts)
 
-
-lines(validacao_ts)
-
 #verifica precisao
 accuracy(modelo_ARIMA_proj, validacao_ts)
-
 checkresiduals(modelo_ARIMA_proj, test="LB")
-
 
 ############################################################################################
 #4. Projeção Modelo Final
