@@ -514,7 +514,8 @@ summary(modelo_ses)
 modelo_ses_proj <- forecast(modelo_ses, h=tam_amostra_teste, level=0.95)
 
 #plota o grafica da projecao
-plot(modelo_ses_proj, ylab="Forecast", xlab="Tempo", bty="l", xaxt="n", flty=2)
+plot(modelo_ses_proj, ylim=c(3850331, 98420518), ylab="Faturamento Pre-processado", xlab="Tempo", bty="l", xaxt="n", xlim=c(2011,2020), flty=2)
+axis(1, at=seq(2011, 2020, 1), labels=format(seq(2011, 2020, 1)))
 lines(modelo_ses$fitted, lwd=2, col="blue")
 lines(validacao_ts)
 
@@ -526,6 +527,7 @@ Acf(modelo_ses$residuals)
 
 #verifica os resÃ­duos com teste de Ljung-Box
 checkresiduals(modelo_ses, test="LB")
+
 
 ############################################################################################
 #3.12 Modelo Exponencial com Tendência Aditiva e Sazonalidade Multiplicativa - Isabella
