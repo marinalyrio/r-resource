@@ -109,6 +109,14 @@ gplot(compras1,gmode="twomode",displaylabels = TRUE,
       edge.col="gray",label.cex = 0.7,usearrows=FALSE,
       vertex.cex = closeness(compras1,gmode="twomode")*3)
 
+# Explorando a rede
+
+degree(compras1,gmode="twomode",cmode="indegree")
+
+closeness(compras1,gmode="twomode")
+
+betweenness(compras1,gmode="twomode")
+
 
 # 2) :::: CAIO :::::::
     # Utilizando a Rede One Mode do arquivo Rede One Mode_Tarefa Aulas 1, 2 e 3_Paulista T10.xlsx descreva sua estrutura de
