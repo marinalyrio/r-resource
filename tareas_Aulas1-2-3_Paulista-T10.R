@@ -31,6 +31,8 @@ options(scipen = 999)
 library(network)
 library(sna)
 library(igraph)
+library(rgl)
+library(dplyr)
 
 # 1 # Explore as rotinas Exemplo Rede One Mode_Paulista T10.R e Exemplo Rede Two Mode_Paulista T10.R .
     # Rode os códigos na plataforma R utilizando como base as tabelas Rede One Mode_Tarefa Aulas 1, 2 e 3_Paulista T10.xlsx
@@ -39,6 +41,49 @@ library(igraph)
     # e comente seus resultados, análises, potenciais implicações gerenciais, etc, conforme discutido em sala nas Aulas 1, 2 e 3.
 
 # 1 - A) :::: AMAURI   - REDE ONE MODE :::::::
+rede <- read.table("RedeOneMode-TarefaAulas-1-2-3.csv", header=TRUE, sep = ";", dec=",")
+View(rede)
+
+# :::Preparação do dataframe
+rede <- as.data.frame(rede)
+grede <- rede[,2:33]
+rownames(grede) <- rede[,1]
+View(grede)
+
+gplot(grede, gmode="graph", displaylabels = TRUE, edge.col="gray", userarrows=FALSE, vertex.cex=degree(grede, gmode="graph", cmode="indegree")/10, label.pos = 10)
+
+degree(grede,gmode="graph",cmode="indegree")
+
+# Organizando as saidas Degree em tabelas
+labelsList <- colnames(grede)
+degreeList <- c(degree(grede,gmode="graph",cmode="indegree"))
+degreeDF <- data.frame(labelsList, degreeList)
+df2 <- data.frame(t(degreeDF[-1]))
+colnames(df2) <- degreeDF[, 1]
+View(df2)
+
+betweenness(grede,gmode="graph")
+
+# Organizando as saidas Closeness em tabelas
+closeness(grede,gmode="graph")
+closenessList <- c(betweenness(grede,gmode="graph"))
+closenessDF <- data.frame(labelsList, closenessList)
+CloseDF <- data.frame(t(closenessDF[-1]))
+colnames(CloseDF) <- closenessDF[, 1]
+CloseDF <- format(round(CloseDF, 3), nsmall = 3)
+View(CloseDF)
+
+betweenness(grede,gmode="graph")
+
+# Organizando as saidas Betweeness em tabelas
+betweenness(grede,gmode="graph")
+betweenList <- c(betweenness(grede,gmode="graph"))
+betweenessDF <- data.frame(labelsList, betweenList)
+betweenDF <- data.frame(t(betweenessDF[-1]))
+colnames(betweenDF) <- betweenessDF[, 1]
+betweenDF <- format(round(betweenDF, 3), nsmall = 3)
+View(betweenDF)
+
 # 1 - B) :::: ISABELLA - REDE TWO MODE :::::::
     
 # Le o arquivo com as informações de compras
