@@ -93,7 +93,7 @@ compras <- read.csv2("C:/Users/Isabella/Documents/MBA FGV/10.Análise de Mídias
 compras <- as.data.frame(compras)
 
 # Adaptando o data.frame compras para que possa servir para a montagem da rede
-compras1 <- compras[,2:20]
+compras1 <- compras[,2:21]
 rownames(compras1) <- compras[,1]
 
 # Construindo a rede a partir da matriz de relações (0 e 1)
