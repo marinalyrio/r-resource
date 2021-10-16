@@ -5,7 +5,7 @@
 # Caio Ramos        - Matrícula: A58338177
 # Isabela Massaro   - Matrícula: A58337886
 # Márcia Magalhães  - Matrícula: A58331043
-# Marina            - Matrícula:
+# Marina            - Matrícula: A55310554
 #
 # Turma: T10
 # Curso: MBA EM BUSINESS ANALYTICS E BIG DATA
@@ -127,6 +127,28 @@ betweenness(compras1,gmode="twomode")
 # 3) :::: MARINA :::::::
     # Inclua outras análises em seu código (usando as extensões sna, network ou igraph) e comente os resultados (seja criativo!).
 
+## distância geodésica
+geod <- geodist(grede, inf.replace=Inf, count.paths=TRUE, predecessors=FALSE,
+        ignore.eval=TRUE, na.omit=TRUE)
+geod
+View(as.data.frame(geod$counts))
+View(as.data.frame(geod$gdist))
+
+max(geod$gdist)
+
+
+## matriz de adjacência
+m_grede <- as.matrix(grede)
+View(m_grede)
+View(t(m_grede))
+View(as.data.frame(m_grede %*% t(m_grede)))
+
+adjacencia_2 <- m_grede %*% t(m_grede)
+min(adjacencia_2)
+
+## K-Path e K-Cycle
+kpath.census(grede, maxlen = 4, mode = "graph")
+kcycle.census(grede, maxlen = 4, mode = "graph")
 
 
 # 4) :::: MARCIA :::::::
